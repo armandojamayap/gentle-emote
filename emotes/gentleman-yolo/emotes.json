@@ -3,10 +3,6 @@
     "default": "idle.png",
     "blink": "idle_blink.png"
   },
-  "think": {
-    "default": "think.png",
-    "hard": "think_hard.png"
-  },
   "talk": {
     "weights": {
       "talk_close.png": 1,
@@ -17,6 +13,7 @@
   },
   "cycle": {
     "hi": "loop",
+    "think": "loop",
     "tool": "loop",
     "write": "loop",
     "ask": "loop",
@@ -28,6 +25,7 @@
     "jobs": "loop",
     "remember": "loop",
     "yolo": "loop",
+    "super-yolo": "loop",
     "explore": "loop",
     "build": "loop",
     "verify": "loop",
@@ -36,7 +34,8 @@
     "jira": "loop"
   },
   "frameMs": {
-    "hi": 300,
+    "hi": 280,
+    "think": 420,
     "tool": 260,
     "write": 240,
     "read": 450,
@@ -46,15 +45,16 @@
     "compact": 380,
     "grandma": 520,
     "bye": 650,
-    "delegate": 280,
+    "delegate": 320,
     "jobs": 900,
-    "remember": 700,
+    "remember": 800,
     "yolo": 1100,
-    "explore": 800,
-    "build": 260,
-    "verify": 700,
+    "super-yolo": 1100,
+    "explore": 420,
+    "build": 280,
+    "verify": 360,
     "judge": 450,
     "review": 1200,
-    "jira": 500
+    "jira": 380
   }
 }

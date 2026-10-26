@@ -83,6 +83,11 @@ export function loadEmotesConfig(emoteSetDir: string): EmotesConfig {
   return {};
 }
 
+/** `fail*.png` is held when something goes wrong. It is not part of the loop. */
+export function cycleFrameFiles(files: string[]): string[] {
+  return files.filter((file) => !file.startsWith("fail"));
+}
+
 export function discoverFrames(emoteSetDir: string, transform?: FrameTransform): Map<EmoteState, FrameSet> {
   const frameMap = new Map<EmoteState, FrameSet>();
 

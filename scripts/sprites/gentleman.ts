@@ -11,7 +11,7 @@ export const C = {
   stubble: "#a8775c",
   frame: "#0d0d0f", wire: "#5d5f66", glare: "#d8ecff",
   white: "#f4f4f4", iris: "#4fa860", pupil: "#10151f", lid: "#5a3424",
-  mouth: "#4a1c1c", teeth: "#f5efe6", tongue: "#c4505a",
+  mouth: "#4a1c1c", tongue: "#c4505a",
   shirt: "#25252c", shirtEdge: "#55556a",
   chain: "#b9bcc6", leaf: "#3fa34d",
   soot: "#3a3330", sootShade: "#2a2422", sootStubble: "#221d1b",
@@ -72,6 +72,8 @@ export interface Look {
   grandma?: boolean;
   /** Raise the mustache by one pixel (talking wide). */
   mustacheLift?: number;
+  /** The scene puts a hat on him: the YOLO look keeps only the sunglasses. */
+  hatted?: boolean;
 }
 
 const headPalette = (look: Look): Palette => {
@@ -126,21 +128,23 @@ function drawEyes(cv: Canvas, hx: number, hy: number, look: Look) {
 
 export type MouthKind = "closed" | "small" | "mid" | "wide" | "o" | "grin" | "kiss" | "frown" | "clench";
 
+// No teeth: the mustache covers the mouth's top row except a 2px gap in the
+// middle, so any light row there reads as a single buck tooth.
 function drawMouth(cv: Canvas, hx: number, hy: number, look: Look) {
   const kind = look.mouth ?? "closed";
   const skin = look.soot ? C.soot : C.skin;
   const y = hy + 19;
   cv.rect(hx + 9, y, 4, 1, skin);
   const put = (dx: number, dy: number, rows: string[]) =>
-    cv.blit(rows, hx + dx, y + dy, { N: C.mouth, n: C.teeth, t: C.tongue, S: skin });
+    cv.blit(rows, hx + dx, y + dy, { N: C.mouth, t: C.tongue, S: skin });
   switch (kind) {
     case "closed": put(9, 0, ["NNNN"]); break;
     case "small": put(9, 0, ["NNNN", "NNNN"]); break;
-    case "mid": put(8, 0, ["NnnnnN", "NNNNNN"]); break;
-    case "wide": put(8, 0, ["NnnnnN", "NNttNN", ".NNNN."]); break;
+    case "mid": put(8, 0, ["NNNNNN", ".NttN."]); break;
+    case "wide": put(8, 0, ["NNNNNN", "NNttNN", ".NNNN."]); break;
     case "o": put(9, 0, [".NN.", "NNNN", ".NN."]); break;
-    case "grin": put(7, 0, ["nnnnnnnn", ".NNNNNN."]); break;
-    case "clench": put(7, 0, ["nNnNnNnn", ".nnnnnn."]); break;
+    case "grin": put(7, 0, ["NNNNNNNN", ".NNttNN.", "..NNNN.."]); break;
+    case "clench": put(7, 0, ["NNNNNNNN", "N.NN.NN."]); break;
     case "kiss": put(10, 0, ["tt", "NN"]); break;
     case "frown": put(8, 0, [".NNNN.", "N....N"]); break;
   }
@@ -245,7 +249,7 @@ export function drawHead(cv: Canvas, hx: number, hy: number, look: Look = {}) {
   drawMouth(cv, hx, hy, look);
   drawMustache(cv, hx, hy, look);
   if (yoloLook) {
-    if (!look.grandma) headband(cv, hx, hy);
+    if (!look.grandma && !look.hatted) headband(cv, hx, hy);
     sunglasses(cv, hx, hy, look.eyes === "blink" || look.eyes === "wink");
   }
   if (look.grandma) drawCurlers(cv, hx, hy);
@@ -267,12 +271,15 @@ const ROSE = sprite("rose", [
 
 export interface TorsoOptions {
   shawl?: boolean;
+  /** Stop the torso after this many rows instead of filling the canvas. */
+  rows?: number;
 }
 
-/** Torso centered on `cx`, starting at `top` and running to the bottom of the canvas. */
+/** Torso centered on `cx`, starting at `top`. Fills the canvas unless `rows` is set. */
 export function drawTorso(cv: Canvas, cx: number, top: number, options: TorsoOptions = {}) {
   const fill = options.shawl ? C.shawl : C.shirt;
-  for (let row = 0; top + row < cv.height; row++) {
+  const limit = options.rows ?? cv.height;
+  for (let row = 0; top + row < cv.height && row < limit; row++) {
     const half = Math.min(15, 5 + Math.round(row * 2.6));
     for (let x = cx - half; x < cx + half; x++) {
       const edge = x === cx - half || x === cx + half - 1;
