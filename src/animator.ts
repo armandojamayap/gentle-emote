@@ -28,7 +28,6 @@ export class Animator {
   private blinkTimer: ReturnType<typeof setTimeout> | null = null;
   private talkTimer: ReturnType<typeof setInterval> | null = null;
   private cycleTimer: ReturnType<typeof setInterval> | null = null;
-  private thinkTimer: ReturnType<typeof setTimeout> | null = null;
   private talkGapTimer: ReturnType<typeof setTimeout> | null = null;
   private talkDurationTimer: ReturnType<typeof setTimeout> | null = null;
   private grandmaTimer: ReturnType<typeof setTimeout> | null = null;
@@ -42,6 +41,8 @@ export class Animator {
   private afterTalkState: EmoteState = "idle";
   private stopped = false;
   private idleVariant: EmoteState | null = null;
+  private promptDepth = 0;
+  private deferredFailure: { state: EmoteState; file: string } | null = null;
 
   // Talk state
   private talkWordCount = 0;
@@ -92,6 +93,28 @@ export class Animator {
 
   resetRenderCache() {
     this.renderer.resetCache();
+    if (this.promptDepth > 0 && !this.stopped) this.renderer.showCycleFrame("ask", 0);
+  }
+
+  /** A blocking prompt covers the avatar without replacing the logical state. */
+  beginPrompt() {
+    this.promptDepth++;
+    if (this.stopped) return;
+    this.renderer.showCycleFrame("ask", 0);
+  }
+
+  endPrompt() {
+    if (this.promptDepth === 0) return;
+    this.promptDepth--;
+    if (this.stopped || this.promptDepth > 0) return;
+    if (this.deferredFailure && this.currentState === "failure") {
+      const frame = this.deferredFailure;
+      this.deferredFailure = null;
+      this.renderer.showFrame(frame.state, frame.file);
+      return;
+    }
+    const visual = this.cycleVisual(this.currentState);
+    this.renderer.showCycleFrame(visual, this.cycleIndex);
   }
 
   disposeRenderer() {
@@ -113,7 +136,6 @@ export class Animator {
     if (this.cycleTimer) { clearInterval(this.cycleTimer); this.cycleTimer = null; }
     if (this.talkGapTimer) { clearTimeout(this.talkGapTimer); this.talkGapTimer = null; }
     if (this.talkDurationTimer) { clearTimeout(this.talkDurationTimer); this.talkDurationTimer = null; }
-    if (this.thinkTimer) { clearTimeout(this.thinkTimer); this.thinkTimer = null; }
     if (this.grandmaTimer) { clearTimeout(this.grandmaTimer); this.grandmaTimer = null; }
   }
 
@@ -124,7 +146,6 @@ export class Animator {
     if (this.cycleTimer) { clearInterval(this.cycleTimer); this.cycleTimer = null; }
     if (this.talkGapTimer) { clearTimeout(this.talkGapTimer); this.talkGapTimer = null; }
     if (this.talkDurationTimer) { clearTimeout(this.talkDurationTimer); this.talkDurationTimer = null; }
-    if (this.thinkTimer) { clearTimeout(this.thinkTimer); this.thinkTimer = null; }
   }
 
   // --- State transitions ---
@@ -141,7 +162,7 @@ export class Animator {
     switch (state) {
       case "hi": this.enterHi(); break;
       case "idle": this.enterIdle(); break;
-      case "think": this.enterThink(); break;
+      case "think": this.enterCycle("think"); break;
       case "talk": this.enterTalk(); break;
       case "read":
       case "write":
@@ -154,6 +175,7 @@ export class Animator {
       case "jobs":
       case "remember":
       case "yolo":
+      case "super-yolo":
       case "explore":
       case "build":
       case "verify":
@@ -165,8 +187,9 @@ export class Animator {
     }
   }
 
+  /** Flies in once (`in_*`), then the propeller keeps spinning until the greeting ends. */
   private enterHi() {
-    this.enterCycle("hi");
+    this.enterSequence("hi");
     this.holdTimer = setTimeout(() => this.transitionTo("idle"), this.config.holdDuration.hi);
   }
 
@@ -253,37 +276,6 @@ export class Animator {
     }, blinkDuration);
   }
 
-  private enterThink() {
-    const defaultFile = this.emotesConfig.think?.default ?? "think.png";
-    this.renderer.showFrame("think", defaultFile);
-    this.scheduleThinkSwap();
-  }
-
-  private scheduleThinkSwap() {
-    if (this.thinkTimer) { clearTimeout(this.thinkTimer); this.thinkTimer = null; }
-    if (this.stopped) return;
-    const delay = randomInRange(this.config.blinkInterval[0], this.config.blinkInterval[1]);
-    this.thinkTimer = setTimeout(() => {
-      if (this.currentState !== "think") return;
-      this.doThinkSwap();
-    }, delay);
-  }
-
-  private doThinkSwap() {
-    const hardFile = this.emotesConfig.think?.hard ?? "think_hard.png";
-    if (!this.renderer.showFrame("think", hardFile, true)) {
-      this.scheduleThinkSwap();
-      return;
-    }
-
-    const defaultFile = this.emotesConfig.think?.default ?? "think.png";
-    setTimeout(() => {
-      if (this.currentState !== "think") return;
-      this.renderer.showFrame("think", defaultFile, true);
-      this.scheduleThinkSwap();
-    }, 800);
-  }
-
   private enterTalk() {
     this.talkWordCount = 0;
     this.talkStartTime = Date.now();
@@ -355,15 +347,31 @@ export class Animator {
     return this.emotesConfig.frameMs?.[state] ?? this.config.cycleMs;
   }
 
+  /** Super YOLO keeps the sun on screen while the model is thinking. */
+  private cycleVisual(state: EmoteState): EmoteState {
+    if (state === "think" && this.idleVariant === "super-yolo") return "super-yolo";
+    return state;
+  }
+
+  private presentCycle(visual: EmoteState, index: number) {
+    if (this.promptDepth > 0) {
+      const askCount = this.renderer.getCycleFrameCount("ask");
+      this.renderer.showCycleFrame("ask", askCount > 0 ? index % askCount : 0);
+      return;
+    }
+    this.renderer.showCycleFrame(visual, index);
+  }
+
   private enterCycle(state: EmoteState) {
+    const visual = this.cycleVisual(state);
     this.cycleIndex = 0;
     this.cycleDirection = 1;
-    this.renderer.showCycleFrame(state, 0);
+    this.presentCycle(visual, 0);
 
-    const count = this.renderer.getCycleFrameCount(state);
+    const count = this.renderer.getCycleFrameCount(visual);
     if (count <= 1) return;
 
-    const loop = this.emotesConfig.cycle?.[state] === "loop";
+    const loop = (this.emotesConfig.cycle?.[visual] ?? this.emotesConfig.cycle?.[state]) === "loop";
     this.cycleTimer = setInterval(() => {
       if (this.currentState !== state) return;
       if (loop) {
@@ -373,8 +381,8 @@ export class Animator {
         if (this.cycleIndex >= count - 1) this.cycleDirection = -1;
         if (this.cycleIndex <= 0) this.cycleDirection = 1;
       }
-      this.renderer.showCycleFrame(state, this.cycleIndex);
-    }, this.frameMs(state));
+      this.presentCycle(visual, this.cycleIndex);
+    }, this.frameMs(visual));
   }
 
   /** Plays `in_*` frames once, then loops the remaining frames forward. */
@@ -400,5 +408,30 @@ export class Animator {
   private enterHold(state: EmoteState, duration: number, nextState: EmoteState = "idle") {
     this.enterCycle(state);
     this.holdTimer = setTimeout(() => this.transitionTo(nextState), duration);
+  }
+
+  /**
+   * Holds one frame for the failure duration, counted as `failure` so the
+   * end of the run does not replace it. Returns false when the file is missing.
+   */
+  showFailureFrame(state: EmoteState, file: string): boolean {
+    if (this.promptDepth > 0) {
+      if (!this.renderer.getFrameFiles(state).includes(file)) return false;
+      this.clearStateTimers();
+      this.currentState = "failure";
+      this.deferredFailure = { state, file };
+      const next = this.holdNextState;
+      this.holdNextState = "idle";
+      this.holdTimer = setTimeout(() => this.transitionTo(next), this.config.holdDuration.failure);
+      return true;
+    }
+    this.deferredFailure = null;
+    if (!this.renderer.showFrame(state, file)) return false;
+    this.clearStateTimers();
+    this.currentState = "failure";
+    const next = this.holdNextState;
+    this.holdNextState = "idle";
+    this.holdTimer = setTimeout(() => this.transitionTo(next), this.config.holdDuration.failure);
+    return true;
   }
 }

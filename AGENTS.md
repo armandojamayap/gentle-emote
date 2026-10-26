@@ -217,8 +217,7 @@ emotes/<set-name>/
 │   ├── idle.png
 │   └── idle_blink.png
 ├── think/
-│   ├── think.png
-│   └── think_hard.png
+│   └── *.png              # cycles in filename order
 ├── talk/
 │   ├── close.png
 │   ├── open_small.png
@@ -246,10 +245,6 @@ Optional file inside each emote set to configure frame behavior:
   "idle": {
     "default": "idle.png",
     "blink": "idle_blink.png"
-  },
-  "think": {
-    "default": "think.png",
-    "hard": "think_hard.png"
   },
   "talk": {
     "weights": {

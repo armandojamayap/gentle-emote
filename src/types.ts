@@ -1,7 +1,7 @@
 export const EMOTE_STATES = [
   "hi", "idle", "think", "talk", "read", "write", "tool",
   "success", "failure", "compact", "ask", "grandma", "bye",
-  "delegate", "jobs", "remember", "yolo",
+  "delegate", "jobs", "remember", "yolo", "super-yolo",
   "explore", "build", "verify", "judge", "review", "jira",
 ] as const;
 

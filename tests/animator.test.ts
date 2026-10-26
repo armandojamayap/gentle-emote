@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 import { Animator } from "../src/animator.ts";
@@ -106,4 +107,79 @@ test("success after talk: setAfterTalkState plays once talking ends", () => {
   } finally {
     mock.timers.reset();
   }
+});
+
+
+test("Super YOLO thinking advances sun frames without changing the logical activity", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  try {
+    const renderer = fakeRenderer({ "super-yolo": ["super-yolo.png", "super-yolo_blink.png"], tool: ["a", "b"] });
+    const animator = new Animator(config, renderer as any);
+    animator.setEmotesConfig({ cycle: { "super-yolo": "loop" }, frameMs: { "super-yolo": 100 } });
+    animator.setIdleVariant("super-yolo");
+    animator.transitionTo("think");
+    mock.timers.tick(100);
+    mock.timers.tick(100);
+    assert.equal(animator.currentState, "think");
+    assert.deepEqual(renderer.shown.filter((s) => s.startsWith("super-yolo#")), ["super-yolo#0", "super-yolo#1", "super-yolo#0"]);
+    animator.transitionTo("tool");
+    mock.timers.tick(100);
+    assert.equal(renderer.shown.at(-1), "tool#1");
+    animator.stop();
+  } finally { mock.timers.reset(); }
+});
+
+
+test("prompt display priority keeps underlying activity and nested prompts independent", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval", "Date"] });
+  try {
+    const renderer = fakeRenderer({ idle: ["idle.png", "idle_blink.png"], ask: ["a", "b"], tool: ["a", "b"], think: ["a", "b"], verify: ["fail.png"] });
+    const animator = new Animator(config, renderer as any);
+    animator.transitionTo("tool");
+    animator.beginPrompt();
+    animator.beginPrompt();
+    animator.transitionTo("think");
+    animator.resetRenderCache();
+    mock.timers.tick(100);
+    assert.equal(animator.currentState, "think", "UI overlay must not corrupt logical activity");
+    assert.ok(renderer.shown.at(-1)?.startsWith("ask#"));
+    animator.endPrompt();
+    assert.ok(renderer.shown.at(-1)?.startsWith("ask#"), "one pending prompt remains");
+    animator.endPrompt();
+    assert.ok(renderer.shown.at(-1)?.startsWith("think#"));
+    animator.beginPrompt();
+    animator.setHoldNextState("think");
+    assert.equal(animator.showFailureFrame("verify", "fail.png"), true);
+    assert.ok(renderer.shown.at(-1)?.startsWith("ask#"));
+    animator.endPrompt();
+    assert.equal(renderer.shown.at(-1), "verify/fail.png");
+    animator.beginPrompt();
+    animator.stop();
+    const n = renderer.shown.length;
+    animator.endPrompt();
+    mock.timers.tick(1000);
+    assert.equal(renderer.shown.length, n);
+    animator.transitionTo("idle");
+    assert.equal(renderer.shown.at(-1), "idle/idle.png");
+    animator.stop();
+  } finally { mock.timers.reset(); }
+});
+
+
+test("greeting plays arrival and helmet removal once before waving until its hold ends", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  try {
+    const files = readdirSync(new URL("../emotes/gentleman/hi/", import.meta.url)).filter((f) => f.endsWith(".png")).sort();
+    const renderer = fakeRenderer({ hi: files, idle: ["idle.png"] });
+    const animator = new Animator({ ...config, cycleMs: 280, holdDuration: { ...config.holdDuration, hi: 2400 } }, renderer as any);
+    animator.transitionTo("hi");
+    mock.timers.tick(2240);
+    assert.deepEqual(renderer.shown, [
+      "hi/in_1.png", "hi/in_2.png", "hi/in_3.png", "hi/in_4.png",
+      "hi/in_5.png", "hi/in_6.png", "hi/landed_1.png", "hi/landed_2.png", "hi/landed_1.png",
+    ]);
+    mock.timers.tick(160);
+    assert.equal(animator.currentState, "idle");
+    animator.clearAllTimers();
+  } finally { mock.timers.reset(); }
 });

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { EMOTE_STATES } from "../src/types.ts";
 import { decodePng } from "../src/png.ts";
 import { ACCENT_KEYS } from "../src/accent.ts";
+import { cycleFrameFiles } from "../src/emotes.ts";
 import { toolNameToState } from "../src/index.ts";
 
 const SET = join(import.meta.dirname, "..", "emotes", "gentleman");
@@ -33,6 +34,37 @@ test("only the rose logo carries accent keys; the mustache matches the hair", ()
   }
   assert.ok(keys > 0, "the rose logo follows the customize accent");
   assert.equal(keysOnFace, 0, "no accent pixels on the head (mustache uses the hair palette)");
+});
+
+test("no frame paints the old buck-tooth color", () => {
+  const tooth = [0xf5, 0xef, 0xe6];
+  for (const set of ["gentleman", "gentleman-yolo"]) {
+    const root = join(SET, "..", set);
+    for (const state of EMOTE_STATES) {
+      for (const file of readdirSync(join(root, state)).filter((name) => name.endsWith(".png"))) {
+        const { data } = decodePng(readFileSync(join(root, state, file)));
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] === 0) continue;
+          assert.ok(
+            data[i] !== tooth[0] || data[i + 1] !== tooth[1] || data[i + 2] !== tooth[2],
+            `${set}/${state}/${file} still has a tooth pixel`,
+          );
+        }
+      }
+    }
+  }
+});
+
+test("the verify failure stamp is a frame, and it is not part of the loop", () => {
+  const files = readdirSync(join(SET, "verify")).filter((name) => name.endsWith(".png")).sort();
+  assert.ok(files.includes("fail.png"));
+  assert.deepEqual(cycleFrameFiles(files), files.filter((name) => name !== "fail.png"));
+});
+
+test("the greeting flies in once, then the propeller keeps spinning", () => {
+  const files = readdirSync(join(SET, "hi")).filter((name) => name.endsWith(".png")).sort();
+  assert.ok(files.some((name) => name.startsWith("in_")), "missing the fly-in frames");
+  assert.ok(files.some((name) => name.startsWith("landed_")), "missing the spinning-propeller loop");
 });
 
 test("emotes.json names files that exist", () => {

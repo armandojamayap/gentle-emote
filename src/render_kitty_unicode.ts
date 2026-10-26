@@ -2,7 +2,7 @@ import { getCellDimensions, getImageDimensions, calculateImageRows } from "@eare
 import type { TUI } from "@earendil-works/pi-tui";
 import type { EmoteState, EmotesConfig, FrameSet, FrameTransform } from "./types.ts";
 import type { Renderer, RenderedFrame } from "./renderer.ts";
-import { discoverFrames } from "./emotes.ts";
+import { cycleFrameFiles, discoverFrames } from "./emotes.ts";
 import { wrapTmuxPassthrough } from "./tmux.ts";
 import { log } from "./log.ts";
 import { defaultBorderColor, frameCols, framePngBase64, frameStroke } from "./frame_image.ts";
@@ -270,15 +270,16 @@ export class KittyUnicodeRenderer implements Renderer {
 
   showCycleFrame(state: EmoteState, index: number): boolean {
     const frameSet = this.frameMap.get(state);
-    if (!frameSet || frameSet.files.length === 0) return false;
-    const file = frameSet.files[index % frameSet.files.length]!;
-    const b64 = frameSet.base64Cache.get(file);
+    const files = cycleFrameFiles(frameSet?.files ?? []);
+    if (files.length === 0) return false;
+    const file = files[index % files.length]!;
+    const b64 = frameSet!.base64Cache.get(file);
     if (!b64) return false;
     return this.show(b64);
   }
 
   getCycleFrameCount(state: EmoteState): number {
-    return this.frameMap.get(state)?.files.length ?? 0;
+    return cycleFrameFiles(this.frameMap.get(state)?.files ?? []).length;
   }
 
   dispose() {

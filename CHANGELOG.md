@@ -2,6 +2,23 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## gentle-emote v0.1.3
+
+### Changed
+- **Mouths** — smiles and open mouths are a dark curve with a tongue. The mustache used to hide every tooth except one pixel in the middle.
+- **Hi** — he flies in under a propeller beanie, lands, takes it off and waves.
+- **Think** — a light bulb above his head switches on.
+- **Talk** — the streamer scene (headphones, podcast mic, ON AIR). A copy is kept in `docs/archive/talk-streamer/`.
+- **Read** — deerstalker, pipe and magnifying glass.
+- **Remember** — he cups a hand over his mouth and whispers into the Engram elephant's ear. The rim follows the accent color.
+- **Build** — welding mask and torch.
+- **Delegate** — football coach and exercising robots.
+- **Explore** — backpack, three steps, and a flashlight on footprints.
+- **Verify** — police officer. A green stamp lands on the robot. A failed verify tool holds a red stamp.
+- **Jira** — he launches a rocket into a cloud.
+- **Compact** — he shrinks in place. The shirt stays black.
+- **Super YOLO** — the YOLO character with a sun instead of the rocket. Preview it with `/emote super-yolo`.
+
 ## gentle-emote v0.1.2
 
 ### Changed

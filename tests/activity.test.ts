@@ -103,6 +103,30 @@ test("every animated state shows a frame when entered", () => {
   }
 });
 
+test("a failed verify holds the red stamp, then goes back to thinking", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  try {
+    const shown: string[] = [];
+    const renderer = fakeRenderer({});
+    renderer.showFrame = (state: EmoteState, name: string) => {
+      shown.push(`${state}/${name}`);
+      return name === "fail.png";
+    };
+    const animator = new Animator(config, renderer as any);
+    animator.setHoldNextState("think");
+    assert.equal(animator.showFailureFrame("verify", "fail.png"), true);
+    assert.equal(animator.currentState, "failure");
+    assert.equal(shown.at(-1), "verify/fail.png");
+    mock.timers.tick(999);
+    assert.equal(animator.currentState, "failure");
+    mock.timers.tick(1);
+    assert.equal(animator.currentState, "think");
+    animator.stop();
+  } finally {
+    mock.timers.reset();
+  }
+});
+
 test("talking ends half a second after the reply stops streaming, however long it was", () => {
   mock.timers.enable({ apis: ["setTimeout", "setInterval", "Date"] });
   try {

@@ -111,6 +111,24 @@ export class Canvas {
     }
   }
 
+  /** Copies opaque pixels from another canvas. */
+  stamp(source: Canvas, x: number, y: number): void {
+    for (let sy = 0; sy < source.height; sy++) for (let sx = 0; sx < source.width; sx++) {
+      const color = source.get(sx, sy);
+      if (color) this.set(x + sx, y + sy, color);
+    }
+  }
+
+  /** Nearest-neighbor copy at `scale` (1 draws the source unchanged). */
+  scaled(source: Canvas, x: number, y: number, scale: number): void {
+    const width = Math.max(1, Math.round(source.width * scale));
+    const height = Math.max(1, Math.round(source.height * scale));
+    for (let dy = 0; dy < height; dy++) for (let dx = 0; dx < width; dx++) {
+      const color = source.get(Math.floor(dx / scale), Math.floor(dy / scale));
+      if (color) this.set(x + dx, y + dy, color);
+    }
+  }
+
   /** Traces a 1px outline around opaque pixels onto transparent neighbors. */
   outline(color: string): void {
     const opaque = (x: number, y: number) => this.get(x, y) !== null;

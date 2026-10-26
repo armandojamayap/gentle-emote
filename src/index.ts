@@ -42,37 +42,38 @@ const DEMO_STEP_MS = 3500;
 const PREVIEW_TALK_TEXT = "Here is the thing: this preview talks for a few seconds so you can watch the mouth move and the mustache bounce.";
 /** States that never end on their own and would stay up forever in a preview. */
 const PREVIEW_LOOPING_STATES = new Set<EmoteState>([
-  "think", "read", "write", "tool", "ask", "compact", "delegate", "jobs", "remember", "yolo",
+  "think", "read", "write", "tool", "ask", "compact", "delegate", "jobs", "remember", "yolo", "super-yolo",
   "explore", "build", "verify", "judge", "review", "jira",
 ]);
 const DEMO_SEQUENCE: EmoteState[] = [
   "hi", "think", "talk", "read", "tool", "delegate", "explore", "build", "verify", "judge", "review", "jira",
-  "write", "jobs", "remember", "ask", "success", "failure", "compact", "yolo", "grandma", "bye",
+  "write", "jobs", "remember", "ask", "success", "failure", "compact", "yolo", "super-yolo", "grandma", "bye",
 ];
 const EMOTE_DESCRIPTIONS: Record<string, string> = {
-  hi: "waves hello",
+  hi: "flies in under a propeller beanie",
   idle: "resting, blinks",
-  think: "hand on chin",
+  think: "light bulb switches on",
   talk: "streaming a reply",
-  read: "magnifier on the files",
+  read: "deerstalker, pipe and magnifier",
   write: "frying pan cooking code",
   tool: "whipping the IA robot",
   success: "celebrates",
   failure: "robot blew up",
-  compact: "squashes the papers",
+  compact: "shrinks in place",
   ask: "STOP: you decide",
   grandma: "idle too long (press a key to wake)",
   bye: "stores memory, tips the hat",
-  delegate: "megaphone to three IA mini-robots (subagents)",
+  delegate: "football coach whistling at IA robots (subagents)",
   jobs: "sips mate watching a progress bar (background jobs)",
-  remember: "jots in a notebook (Engram mem_save)",
+  remember: "whispers into the Engram elephant's ear (mem_save)",
   yolo: "sunglasses, YOLO headband and a rocket (YOLO mode)",
-  explore: "explorer hat and binoculars (explore subagents)",
-  build: "hard hat and wrench (worker / fix subagents)",
-  verify: "ticks a checklist (verify / validator subagents)",
+  "super-yolo": "the YOLO character with a sun instead of the rocket",
+  explore: "explorer hat, walking, flashlight on footprints (explore subagents)",
+  build: "welding mask and torch (worker / fix subagents)",
+  verify: "police officer, a stamp lands on the robot (verify / validator subagents)",
   judge: "judge wig and gavel (judge / refuter subagents)",
   review: "red pen on a page, robot holds the review sign (review-* subagents)",
-  jira: "writes a ticket comment (jira subagents)",
+  jira: "launches a rocket into a cloud (jira subagents)",
   demo: "plays every state in a row",
 };
 
@@ -503,7 +504,8 @@ export default function (pi: ExtensionAPI) {
     if (event.isError) {
       runHadError = true;
       animator.setHoldNextState("think");
-      animator.transitionTo("failure");
+      const scene = toolNameToState(event.toolName, event.args);
+      if (scene !== "verify" || !animator.showFailureFrame("verify", "fail.png")) animator.transitionTo("failure");
     } else if (!ASK_TOOLS.has(event.toolName) && !STICKY_TOOL_STATES.has(toolNameToState(event.toolName))) {
       show("read");
     }
