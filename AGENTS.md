@@ -1,6 +1,6 @@
-# pi-emote
+# gentle-emote
 
-Animated pixel-art emote widget for pi TUI. Displays a reactive avatar that changes expression based on agent activity (thinking, talking, reading, writing, tool use, etc.).
+Fork of pi-emote: animated pixel-art Gentleman avatar for the Pi / Gentle Shell TUI. Displays a reactive avatar that changes expression based on agent activity (thinking, talking, reading, writing, tool use, etc.).
 
 ## Configuration
 
@@ -11,8 +11,8 @@ pi-emote uses layered configuration with deep merge. Higher-priority layers over
 | Layer | Path | Purpose |
 |-------|------|---------|
 | Extension defaults | `<ext-dir>/config.json` | Shipped defaults |
-| User global | `~/.pi/agent/extensions/pi-emote/config.json` | Personal preferences |
-| Project local | `.pi/extensions/pi-emote/config.json` | Project-specific overrides |
+| User global | `~/.pi/agent/extensions/gentle-emote/config.json` | Personal preferences |
+| Project local | `.pi/extensions/gentle-emote/config.json` | Project-specific overrides |
 
 ### Config Fields
 
@@ -199,8 +199,8 @@ The `terminals` array uses **merge-by-key** semantics: entries are merged by `ma
 
 When resolving an emote set name, pi-emote searches these locations in order:
 
-1. **Project:** `.pi/extensions/pi-emote/emotes/<set-name>/`
-2. **User:** `~/.pi/agent/extensions/pi-emote/emotes/<set-name>/`
+1. **Project:** `.pi/extensions/gentle-emote/emotes/<set-name>/`
+2. **User:** `~/.pi/agent/extensions/gentle-emote/emotes/<set-name>/`
 3. **Extension:** `<ext-dir>/emotes/<set-name>/`
 4. **Fallback:** `<ext-dir>/emotes/default/`
 
@@ -265,7 +265,7 @@ Optional file inside each emote set to configure frame behavior:
 
 1. Create the directory in the appropriate location:
    ```bash
-   mkdir -p ~/.pi/agent/extensions/pi-emote/emotes/my-avatar/{idle,think,talk,read,write,tool,hi,success,failure,compact}
+   mkdir -p ~/.pi/agent/extensions/gentle-emote/emotes/my-avatar/{idle,think,talk,read,write,tool,hi,success,failure,compact}
    ```
 
 2. Add PNG frames to each state directory. Not all states are required — missing states will have no animation for that action.
@@ -286,7 +286,7 @@ Optional file inside each emote set to configure frame behavior:
 
 To use a single custom emote for all models in a project:
 
-`.pi/extensions/pi-emote/config.json`:
+`.pi/extensions/gentle-emote/config.json`:
 ```json
 {
   "emotes": [
@@ -295,4 +295,4 @@ To use a single custom emote for all models in a project:
 }
 ```
 
-Place the frames in `.pi/extensions/pi-emote/emotes/project-mascot/`.
+Place the frames in `.pi/extensions/gentle-emote/emotes/project-mascot/`.

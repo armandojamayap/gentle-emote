@@ -1,6 +1,18 @@
 # Changelog
 
-All notable changes to pi-emote will be documented in this file.
+All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
+
+## gentle-emote v0.1.0
+
+### Added
+- **Gentleman avatar** — code-generated pixel-art set (`npm run sprites`) with 23 states; the rose and the YOLO headband follow the accent color.
+- **Framed avatar beside the prompt** — kitty Unicode placeholders in a rounded frame to the left of the editor; the prompt grows to the frame height (`frame`, `frameRows`).
+- **Gentle Shell scenes** — subagents (`delegate`, plus `explore`, `build`, `verify`, `judge`, `review`, `jira` picked from the agent name), background jobs (`jobs`), Engram `mem_save` (`remember`) and a read-only YOLO mode look (`yolo`).
+- **Grandma and farewell** — turns into a knitting grandma after `grandmaAfterMs` idle; tips the hat on a goodbye prompt (`farewellPattern`).
+- **`/emote` command** — preview any state or play `/emote demo`.
+
+### Removed
+- Upstream image sets (`default`, `red`, `aza_choi`, `test`) and the status/theme widget.
 
 ## v0.3.0
 

@@ -1,257 +1,157 @@
-# CGx's pi-emote
+# gentle-emote
 
-> **Currently looking to expand the emotes gallery!** If you have an emote set you'd like to submit, please make a PR!
+A pixel-art **Gentleman** that sits in a frame to the left of your prompt and acts out what the agent is doing: thinking, talking, reading, writing, delegating to subagents, watching background jobs, saving memories, going YOLO…
 
-Animated pixel-art emote that lives in the top-right corner of your pi TUI session. Reacts to what the agent is doing — thinking, talking, reading, writing, using tools, etc.
+Works in [Gentle Shell](https://github.com/Gentleman-Programming/gentle-shell) and [Pi](https://pi.dev). Forked from [cgxeiji/pi-emote](https://github.com/cgxeiji/pi-emote).
 
-![pi-emote demo](pi-emote-demo.gif)
-
-Supports Kitty, iTerm2, and ASCII rendering.
-
-## Gallery
-
-Community-contributed emote sets. [Submit yours via PR!](#custom-emotes)
-
-### Image Sets
-
-| Avatar | Name | Contributor |
-|--------|------|-------------|
-| <img src="emotes/default/hi/hi1.png" width="64"> | `default` | [@cgxeiji](https://github.com/cgxeiji) |
-| <img src="emotes/aza_choi/hi/hi_1.png" width="64"> | `aza_choi` | [@shennguyenrs](https://github.com/shennguyenrs) |
-| <img src="emotes/aza_choi_nobg/hi/hi_1.png" width="64"> | `aza_choi_nobg` | [@shennguyenrs](https://github.com/shennguyenrs) |
-| <img src="emotes/red/hi/hi1.png" width="64"> | `red` | [@cgxeiji](https://github.com/cgxeiji) |
-
-### ASCII Sets
-
-| Avatar | Name | Contributor |
-|--------|------|-------------|
-| `(^ ◡ ^)/` | `ascii` | [@cgxeiji](https://github.com/cgxeiji) |
-| `ʕ•̫͡•ʔ` | `ascii-bear` | [@LCorleone](https://github.com/LCorleone) |
-| <pre>.------.<br>\|  ^o^ \|<br>'--++--'<br>===++===</pre> | `ascii-bot` | [@cgxeiji](https://github.com/cgxeiji) |
+![All gentle-emote states](docs/gallery.png)
 
 ## Install
 
 ```bash
-pi install git:github.com/cgxeiji/pi-emote
+# Gentle Shell
+gentle-shell install npm:gentle-emote
+
+# Pi
+pi install npm:gentle-emote
 ```
 
-## States
+Restart the session (or `/reload`) and the Gentleman says hi.
 
-| State | Trigger |
-|-------|---------|
-| hi | Session start |
-| idle | Nothing happening (blinks occasionally) |
-| think | Reasoning tokens streaming |
-| talk | Text response streaming |
-| read | `read` tool / reading tool output |
-| write | `write` or `edit` tool |
-| tool | Any other tool |
-| success | Successful tool execution |
-| failure | Failed tool execution |
-| compact | Context compaction |
+## Does it use tokens?
+
+**No.** gentle-emote only listens to local session events (agent start/end, message streaming, tool calls). It never calls a model, never adds anything to the context, and makes no network requests. Rendering happens entirely in your terminal.
+
+## Commands
+
+| Command | What it does |
+|---------|--------------|
+| `/emote` | Lists every state |
+| `/emote <state>` | Previews one state for a few seconds (tab-completes), e.g. `/emote delegate` |
+| `/emote demo` | Plays every state in sequence |
+| `/emote idle` | Stops a preview and goes back to rest |
+
+Any new prompt cancels a preview, so the avatar always follows the real agent.
+
+## What he does and when
+
+| State | Situation | How it is detected | Animation |
+|-------|-----------|--------------------|-----------|
+| `hi` | Session starts | `session_start` | Waves hello |
+| `idle` | Waiting for input | No activity | Rests and blinks |
+| `think` | Model is reasoning | Thinking tokens streaming | Hand on chin, eyes up, thought bubble |
+| `talk` | Model is answering | Text streaming | Talks; the mustache bounces on wide vowels |
+| `read` | Reading code or memory | `read`, `grep`, `find`, `ls`, `glob`, `mem_search`, `codegraph_explore`, `web_fetch`… | Sweeps a huge magnifying glass |
+| `write` | Editing code | `write`, `edit`, `multi_edit`, `apply_patch` | Cooks code in a frying pan |
+| `tool` | Running other tools | Any other tool, e.g. `bash` | Whips the "IA" robot |
+| `ask` | Agent needs your answer | `ask_user_question`, `ask_user_choice` | Raised palm with a Y/N bubble |
+| `success` | Agent finished fine | A run that used tools ends with no tool errors | Chef's kiss |
+| `failure` | Something failed | Tool result with error | The robot blows up in his face |
+| `compact` | Context compaction | `session_before_compact` | Squashes a pile of papers |
+| **`delegate`** | **Subagents** (generic) | `subagent_run`, `subagent_continue`, `subagent_reply` for an agent not listed below | Directs three mini "IA" robots with a megaphone |
+| **`explore`** | Exploring subagent | `subagent_run` with an agent matching `explore` (`gentle-ai-explore`) | Pith helmet and binoculars, a treasure map gets its X |
+| **`build`** | Implementing / fixing subagent | Agent matching `worker`, `fix` or `apply` (`gentle-ai-worker`, `jd-fix-agent`) | Hard hat, fixing the "IA" robot with a wrench |
+| **`verify`** | Verifying subagent | Agent matching `verify` or `validator` (`gentle-ai-verify`, `review-validator`) | Ticks a checklist on a clipboard |
+| **`judge`** | Judging subagent | Agent matching `judge` or `refuter` (`jd-judge-a`, `jd-judge-b`, `review-refuter`) | Powdered wig and a gavel strike |
+| **`review`** | Reviewing subagent | Agent starting with `review-` (`review-readability`, `review-reliability`, `review-resilience`, `review-risk`) | Red pen in hand while the robot rotates the signs: magnifier, test tube, shield, warning |
+| **`jira`** | Jira subagent | Agent matching `jira` (`jira-comment`) | Writes a comment on a ticket card |
+| **`jobs`** | **Background jobs** | `bash_background`, `monitor`, `job_list`, `job_stop` | Sips mate while watching a progress bar, with a kitchen timer beside him |
+| **`yolo`** | **YOLO mode** | Reads Gentle Shell's YOLO state (read-only, never changes it) | While active: sunglasses, a "YOLO" headband and a rocket; his rest pose keeps that look |
+| **`remember`** | **Saves a memory in Engram** (optional) | `mem_save` | Writes in a notebook and taps his temple |
+| `grandma` | Long idle | Idle for `grandmaAfterMs` (3 min) | Turns into a knitting grandma |
+| `bye` | You say goodbye | A prompt matching `farewellPattern` (`chau`, `bye`, `nos vemos`…) | Tips his hat |
+
+The subagent scene comes from the `agent` argument of the tool call, so new agents that follow the same naming get the right scene for free. A call without an agent name (for example, continuing a task by id) shows `delegate`.
+
+The subagent scenes, `jobs`, `yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states are simply never triggered. In plain Pi the rest works the same.
+
+The rose on his chest follows your accent color (Gentle Shell's `/gentle:customize`), and so does the YOLO headband.
 
 ## Config
 
-Drop a `config.json` in one of these paths (highest priority wins):
+Drop a `config.json` with only the keys you want to change in either place (the later one wins):
 
-- `~/.pi/agent/extensions/pi-emote/config.json` — your global prefs
-- `.pi/extensions/pi-emote/config.json` — project override
-
-Only include what you want to change:
+- `<agent dir>/extensions/gentle-emote/config.json`: global. The agent dir is `PI_CODING_AGENT_DIR`, or `~/.pi/agent` by default.
+- `.pi/extensions/gentle-emote/config.json`: per project.
 
 ```json
 {
-  "size": 12,
+  "frameRows": 5,
+  "grandmaAfterMs": 600000
+}
+```
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `enabled` | `true` | Turns the avatar on or off |
+| `placement` | `"beside-editor"` | Where the avatar sits: `"beside-editor"` or `"above-editor"` |
+| `frame` | `true` | Draws a rounded frame around the avatar |
+| `frameRows` | `4` | Avatar height in terminal rows. The prompt grows to match it |
+| `minEditorWidth` | `40` | Below this prompt width the avatar hides to leave room for typing |
+| `grandmaAfterMs` | `180000` | Idle time before the grandma appears. Use `0` to disable it |
+| `farewellPattern` | Spanish and English goodbyes | Regex (case-insensitive) that triggers `bye` |
+| `accent` | `"auto"` | Rose and headband color: `"auto"` follows `/gentle:customize`; or `"pink"`, `"cyan"`, `"yellow"`, `"green"`, or a hex like `"#ff6ec7"` |
+| `readingSpeed` | `4` | Words per second used to pace `talk` |
+| `holdDuration` | see `config.json` | How long `hi`, `success`, `failure` and `bye` stay on screen (ms) |
+| `emotes` | `gentleman` | Emote set per model or thinking level (see below) |
+| `terminals` | see `config.json` | Renderer per terminal (see below) |
+
+See `config.json` in the package root for every default.
+
+### Emote sets per model
+
+Glob patterns against the model ID and/or thinking level. The last match wins:
+
+```json
+{
   "emotes": [
-    { "model": "*claude*", "emote-set": "my-avatar" }
+    { "model": "*", "emote-set": "gentleman" },
+    { "model": "*haiku*", "emote-set": "my-avatar" }
   ]
 }
 ```
 
-See `config.json` in the extension root for all defaults.
+Custom sets live in `.pi/extensions/gentle-emote/emotes/<name>/` (project) or `<agent dir>/extensions/gentle-emote/emotes/<name>/` (user), with one folder of PNG frames per state. Missing states just don't animate. See `emotes/gentleman/emotes.json` for frame timing.
 
-### Theme
+The Gentleman sprites are generated from code: `npm run sprites`.
 
-Customize the widget colors. All fields are optional — omitted fields use the defaults below:
+## Terminals
 
-```json
-{
-  "theme": {
-    "model-name": "accent",
-    "progress-bar": {
-      "default": "text",
-      "cache-hit": "success",
-      "cache-miss": "error",
-      "almost-full": "warning"
-    },
-    "token-info": "dim",
-    "working-directory": "warning",
-    "border": "thinking-level-color",
-    "vertical-separator": "thinking-level-color"
-  }
-}
-```
+| Terminal | Renderer | Status |
+|----------|----------|--------|
+| Ghostty, kitty, WarpTerminal | kitty Unicode placeholders | ✅ Crisp image in a frame |
+| tmux (inside Ghostty or kitty) | kitty Unicode placeholders | ✅ Needs `set -g allow-passthrough on` |
+| iTerm2, WezTerm | iTerm2 images | ⚠️ Works, less tested |
+| Zellij, screen, others | ASCII | Fallback only |
 
-- **`model-name`** — model, thinking level, and context window (always bold)
-- **`progress-bar`** — token usage and context fill; color follows the context state:
-  - `cache-miss`: cache hit rate between 0% and 50% → `error`
-  - `almost-full`: context fill ≥ 75% → `warning` (when not a cache-miss)
-  - `cache-hit`: cache hit rate ≥ 50% → `success` (when not almost-full)
-  - `default`: no cache data yet (0% hit rate on a fresh session) → `text`
-- **`token-info`** — input/output tokens, cache hit rate, cost
-- **`working-directory`** — current working directory
-- **`border`** — top border line
-- **`vertical-separator`** — the `│` divider beside the avatar
-
-Each value is either a pi theme color token or the special `thinking-level-color` flag. `thinking-level-color` follows the thinking level's color (the same color the border uses by default), so it shifts live when the thinking level changes — unlike a fixed token like `thinkingHigh`, which pins one specific level's color.
-
-Available theme color tokens: `accent`, `border`, `borderAccent`, `borderMuted`, `success`, `error`, `warning`, `muted`, `dim`, `text`, `thinkingText`, `thinkingOff`–`thinkingMax`, `md*`, `syntax*`, `tool*` (full list in `src/types.ts`). All colors update live when pi's theme changes — no restart needed.
-
-Invalid values are ignored with a warning and fall back to the defaults.
-
-## Multiplexers
-
-pi-emote can render image avatars through **tmux** using DCS passthrough. When tmux is detected, pi-emote auto-detects the outer terminal and picks the right image protocol.
-
-### tmux Setup
-
-Add these to your `tmux.conf`:
+For tmux, add this to `tmux.conf` and restart the tmux server:
 
 ```bash
-# Required — allow image sequences to pass through to the outer terminal
 set -g allow-passthrough on
-
-# Required — detect outer terminal when attaching from a different terminal
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
-
-# Recommended — reduces flicker during animation
 set -sg escape-time 0
 ```
 
-Then restart tmux completely:
-
-```bash
-tmux kill-server && tmux
-```
-
-Without `allow-passthrough`, pi-emote defaults to ASCII and shows a one-time warning with setup instructions.
-
-### Experimental Multiplexer Support
-
-| Outer Terminal | Protocol | Status |
-|----------------|----------|--------|
-| Ghostty | kitty-unicode | ✅ Stable, pane-safe, auto-detected |
-| kitty | kitty-unicode | ⚠️ Untested, pane-safe, auto-detected |
-| WarpTerminal | kitty-unicode | ⚠️ Untested, pane-safe, auto-detected |
-| iTerm2 | iterm2 | ⚠️ Experimental, opt-in only (pane bleed in multi-pane layouts) |
-| WezTerm | iterm2 | ⚠️ Experimental, opt-in only (not verified) |
-
-The outer terminal is detected via `tmux show-environment TERM_PROGRAM`, which reflects the currently attached terminal.
-
-Ghostty and kitty use the **kitty-unicode** renderer (Unicode placeholders) which is pane-safe — images stay within their pane and clean up on session switch. This is the default when auto-detected.
-
-iTerm2 and WezTerm use DCS passthrough for the iTerm2 image protocol. This works but has known limitations: images can bleed into adjacent panes and persist when switching sessions. **Not enabled by default** — opt in explicitly:
+Force a renderer with `terminals`:
 
 ```json
-{
-  "terminals": [
-    { "match": "tmux", "render": "iterm2" }
-  ]
-}
+{ "terminals": [{ "match": "tmux", "render": "kitty-unicode" }] }
 ```
 
-### Other Multiplexers
+Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"ascii"`.
 
-**zellij** and **screen** are not yet supported and default to ASCII.
+## Limitations
 
-### Manual Override
+- Placing the avatar beside the prompt relies on Pi's internal layout. If a future version changes it, the avatar falls back to sitting above the editor.
+- YOLO detection uses Gentle Shell's internal YOLO channel. It only reads and observes the state and never toggles it. In other hosts the `yolo` look never shows.
+- The `bye` animation plays when you say goodbye, not when the process quits: a quit clears the screen right away.
+- Zellij has no image passthrough, so it gets the ASCII fallback.
 
-Force a specific renderer:
+## Credits
 
-```json
-{
-  "terminals": [
-    { "match": "tmux", "render": "kitty-unicode" }
-  ]
-}
-```
-
-Available render values for tmux: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"ascii"`.
-
-- `"auto"` — detect outer terminal; uses kitty-unicode for Ghostty/kitty, ASCII for others
-- `"kitty-unicode"` — pane-safe Unicode placeholders (Ghostty, kitty)
-- `"kitty"` — classic DCS passthrough (single-pane only, experimental)
-- `"iterm2"` — iTerm2 DCS passthrough (single-pane only, experimental)
-- `"ascii"` — text fallback
-
-## Custom Emotes
-
-Emote sets live in `emotes/<set-name>/` with PNG frames per state:
-
-```
-emotes/my-avatar/
-├── idle/*.png
-├── think/*.png
-├── talk/*.png
-├── read/*.png
-├── write/*.png
-├── tool/*.png
-└── ...          # hi, success, failure, compact
-```
-
-Not all states are required. Missing ones just won't animate.
-
-### Where to put them
-
-pi-emote searches in order:
-
-1. `.pi/extensions/pi-emote/emotes/<name>/` (project)
-2. `~/.pi/agent/extensions/pi-emote/emotes/<name>/` (user)
-3. Extension built-in → falls back to `default`
-
-### Map models or thinking levels to sets
-
-Glob patterns against model ID and/or thinking level, last match wins:
-
-```json
-{
-  "emotes": [
-    { "model": "*", "emote-set": "default" },
-    { "model": "*claude*", "emote-set": "my-avatar" },
-    { "model": "*haiku*", "emote-set": "haiku-avatar" }
-  ]
-}
-```
-
-In this example, `claude` models use `my-avatar`, but `haiku` ones use `haiku-avatar`.
-
-Each entry matches on two dimensions — the model ID and the thinking level (`off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`). Unset selectors default to `*`, so existing model-only entries keep working unchanged. An entry matches when **all** of its selectors match; last match wins:
-
-```json
-{
-  "emotes": [
-    { "model": "*claude*", "emote-set": "my-avatar" },
-    { "thinking-level": "high", "emote-set": "focused-avatar" }
-  ]
-}
-```
-
-`claude` models get `my-avatar` at any thinking level, while **any** model at high thinking gets `focused-avatar`. To target a specific combination, set both selectors:
-
-```json
-{
-  "emotes": [
-    { "model": "*claude*", "thinking-level": "high", "emote-set": "deep-focus" }
-  ]
-}
-```
-
-This matches only `claude` models thinking at `high` level — anything else falls back to `default`.
-
-Order matters: later entries override earlier ones, so put broad mappings first and refinements last. A warning is logged when two entries clash within the same dimension (two model patterns or two thinking-level patterns both match); a model entry and a thinking-level entry matching together is intentional layering and stays silent.
-See `emotes/default/emotes.json` for per-set frame config (blink frames, talk weights).
+Built on [pi-emote](https://github.com/cgxeiji/pi-emote) by Eiji Onchi ([@cgxeiji](https://github.com/cgxeiji)): the animator, renderers and terminal detection come from there. The Gentleman avatar, the framed layout beside the prompt and the Gentle Shell scenes were added in this fork.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
