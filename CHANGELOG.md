@@ -2,6 +2,15 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## gentle-emote v0.1.1
+
+### Fixed
+- **Unknown emote set** — a misspelled or missing set now falls back to the Gentleman instead of the removed `default` set, which left no avatar.
+
+### Docs
+- **Create your own avatar** — README guide for frames, `emotes.json`, accent key colors, install paths and per-model mapping.
+- The state gallery moved from the README to `docs/gallery.md`.
+
 ## gentle-emote v0.1.0
 
 ### Added
