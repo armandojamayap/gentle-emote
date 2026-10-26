@@ -2,6 +2,17 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## gentle-emote v0.1.2
+
+### Changed
+- **Talk scene** — the Gentleman is now live on stream: headphones, a podcast mic and an ON AIR sign that lights up while he speaks.
+- **Talk ends with the reply** — the scene stops half a second after the text finishes streaming instead of "reading" the reply at `readingSpeed`.
+- **YOLO in every scene** — a generated `gentleman-yolo` twin set (sunglasses and headband) is swapped in the moment YOLO turns on or off, whatever he is doing. Custom sets can ship their own `<set>-yolo` twin.
+- **Grandma sooner** — `grandmaAfterMs` defaults to 30 seconds.
+
+### Fixed
+- **Subagent scenes** — `explore`, `build`, `verify`, `judge`, `review` and `jira` changed state without showing any frame.
+
 ## gentle-emote v0.1.1
 
 ### Fixed
