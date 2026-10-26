@@ -2,9 +2,9 @@
 
 A pixel-art **Gentleman** that sits in a frame to the left of your prompt and acts out what the agent is doing: thinking, talking, reading, writing, delegating to subagents, watching background jobs, saving memories, going YOLO…
 
-Works in [Gentle Shell](https://github.com/Gentleman-Programming/gentle-shell) and [Pi](https://pi.dev). Forked from [cgxeiji/pi-emote](https://github.com/cgxeiji/pi-emote).
+Works in [Gentle Shell](https://github.com/Gentleman-Programming/gentle-shell) and [Pi](https://pi.dev). Forked from [cgxeiji/pi-emote](https://github.com/cgxeiji/pi-emote). Want a different character? [Create your own avatar](#create-your-own-avatar).
 
-![All gentle-emote states](docs/gallery.png)
+See every state in the [gallery](https://github.com/efolchmontiel/gentle-emote/blob/main/docs/gallery.md), or preview them live with `/emote demo`.
 
 ## Install
 
@@ -98,22 +98,85 @@ Drop a `config.json` with only the keys you want to change in either place (the 
 
 See `config.json` in the package root for every default.
 
-### Emote sets per model
+## Create your own avatar
 
-Glob patterns against the model ID and/or thinking level. The last match wins:
+The Gentleman is just the default set. You can swap in your own character (your face, your team's mascot, a cat) without touching the extension.
+
+### 1. Make the frames
+
+Create a folder named after your set with one subfolder of PNG frames per state:
+
+```
+my-avatar/
+├── emotes.json            # optional: timing and special frames
+├── idle/idle.png          # resting pose (required)
+├── idle/idle_blink.png    # optional blink
+├── think/think.png
+├── talk/talk_close.png    # talk_small.png, talk_mid.png, talk_wide.png
+├── hi/hi_01.png           # animated states: frames play in filename order
+├── hi/hi_02.png
+└── ...                    # any state from the table above
+```
+
+- **Required:** only `idle`. A missing state just doesn't animate, so you can start small and add scenes later.
+- **Size:** any size works, because the image is scaled to fit the frame. Small pixel art such as 48×40 keeps it crisp.
+- **Frame order:** frames play in alphabetical order, so zero-pad the names (`_01`, `_02`…).
+- **Transparency:** use a transparent background; the frame and the terminal show through.
+- **Accent color:** pixels painted exactly `#ff00ff` (base), `#aa00aa` (shade) or `#ff80ff` (light) follow the accent color, like the Gentleman's rose.
+
+### 2. Tune the timing (optional)
+
+`emotes.json` sets how each state plays. Copy `emotes/gentleman/emotes.json` as a starting point:
+
+```json
+{
+  "idle": { "default": "idle.png", "blink": "idle_blink.png" },
+  "talk": { "weights": { "talk_close.png": 1, "talk_small.png": 3, "talk_mid.png": 3, "talk_wide.png": 1 } },
+  "cycle": { "hi": "loop", "read": "pingpong" },
+  "frameMs": { "hi": 300, "read": 450 }
+}
+```
+
+`cycle` is `"loop"` (1-2-3-1-2-3) or `"pingpong"` (1-2-3-2-1). `frameMs` is the time per frame in milliseconds.
+
+### 3. Install it and select it
+
+Put the folder in one of these places:
+
+- `<agent dir>/extensions/gentle-emote/emotes/my-avatar/`: for you, in every project.
+- `.pi/extensions/gentle-emote/emotes/my-avatar/`: only for that project, so you can commit it for your team.
+
+Then select it in your `config.json`:
+
+```json
+{
+  "emotes": [{ "model": "*", "emote-set": "my-avatar" }]
+}
+```
+
+Run `/reload` and `/emote demo` to check every state.
+
+### Different avatars per model
+
+Entries are glob patterns against the model ID and/or thinking level. The last match wins:
 
 ```json
 {
   "emotes": [
     { "model": "*", "emote-set": "gentleman" },
-    { "model": "*haiku*", "emote-set": "my-avatar" }
+    { "model": "*haiku*", "emote-set": "my-avatar" },
+    { "thinking-level": "high", "emote-set": "focused-avatar" }
   ]
 }
 ```
 
-Custom sets live in `.pi/extensions/gentle-emote/emotes/<name>/` (project) or `<agent dir>/extensions/gentle-emote/emotes/<name>/` (user), with one folder of PNG frames per state. Missing states just don't animate. See `emotes/gentleman/emotes.json` for frame timing.
+### Text-only avatars
 
-The Gentleman sprites are generated from code: `npm run sprites`.
+For terminals without images, a set can be plain text: add an `ascii.yaml` instead of PNGs. See `emotes/ascii/ascii.yaml` for the format.
+
+### Drawing with code
+
+The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from code, and `npm run sprites` rebuilds it. To build your character the same way, clone the repo, copy `scripts/sprites/`, change the shapes and colors, and point the output to your set's folder.
 
 ## Terminals
 
