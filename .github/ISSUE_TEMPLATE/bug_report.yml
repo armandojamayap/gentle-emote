@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a defect in gentle-emote.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe one defect. A pull request is accepted only after the maintainer adds the `approved` label.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What failed?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: gentle-emote version, for example 0.1.2.
+      placeholder: "0.1.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: host
+    attributes:
+      label: Host
+      options:
+        - Pi
+        - Gentle Shell
+        - Both
+        - Not sure
+    validations:
+      required: true

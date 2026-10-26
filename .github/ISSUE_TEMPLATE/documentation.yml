@@ -1,0 +1,23 @@
+name: Documentation
+description: Report a gap or an error in the docs.
+title: "docs: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A pull request is accepted only after the maintainer adds the `approved` label.
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: File, section, or command.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing?
+    validations:
+      required: true
