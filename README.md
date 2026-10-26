@@ -40,7 +40,7 @@ Any new prompt cancels a preview, so the avatar always follows the real agent.
 | `hi` | Session starts | `session_start` | Waves hello |
 | `idle` | Waiting for input | No activity | Rests and blinks |
 | `think` | Model is reasoning | Thinking tokens streaming | Hand on chin, eyes up, thought bubble |
-| `talk` | Model is answering | Text streaming | Talks; the mustache bounces on wide vowels |
+| `talk` | Model is answering | Text streaming; stops half a second after the text ends | Live on stream: headphones, podcast mic, an ON AIR sign that lights up while he speaks |
 | `read` | Reading code or memory | `read`, `grep`, `find`, `ls`, `glob`, `mem_search`, `codegraph_explore`, `web_fetch`… | Sweeps a huge magnifying glass |
 | `write` | Editing code | `write`, `edit`, `multi_edit`, `apply_patch` | Cooks code in a frying pan |
 | `tool` | Running other tools | Any other tool, e.g. `bash` | Whips the "IA" robot |
@@ -56,9 +56,9 @@ Any new prompt cancels a preview, so the avatar always follows the real agent.
 | **`review`** | Reviewing subagent | Agent starting with `review-` (`review-readability`, `review-reliability`, `review-resilience`, `review-risk`) | Red pen in hand while the robot rotates the signs: magnifier, test tube, shield, warning |
 | **`jira`** | Jira subagent | Agent matching `jira` (`jira-comment`) | Writes a comment on a ticket card |
 | **`jobs`** | **Background jobs** | `bash_background`, `monitor`, `job_list`, `job_stop` | Sips mate while watching a progress bar, with a kitchen timer beside him |
-| **`yolo`** | **YOLO mode** | Reads Gentle Shell's YOLO state (read-only, never changes it) | While active: sunglasses, a "YOLO" headband and a rocket; his rest pose keeps that look |
+| **`yolo`** | **YOLO mode** | Reads Gentle Shell's YOLO state (read-only, never changes it) | Sunglasses and a "YOLO" headband in every scene, switched the moment YOLO turns on or off; at rest he adds a rocket |
 | **`remember`** | **Saves a memory in Engram** (optional) | `mem_save` | Writes in a notebook and taps his temple |
-| `grandma` | Long idle | Idle for `grandmaAfterMs` (3 min) | Turns into a knitting grandma |
+| `grandma` | Long idle | No activity or keystrokes for `grandmaAfterMs` (30 s) | Turns into a knitting grandma |
 | `bye` | You say goodbye | A prompt matching `farewellPattern` (`chau`, `bye`, `nos vemos`…) | Tips his hat |
 
 The subagent scene comes from the `agent` argument of the tool call, so new agents that follow the same naming get the right scene for free. A call without an agent name (for example, continuing a task by id) shows `delegate`.
@@ -77,7 +77,7 @@ Drop a `config.json` with only the keys you want to change in either place (the 
 ```json
 {
   "frameRows": 5,
-  "grandmaAfterMs": 600000
+  "grandmaAfterMs": 120000
 }
 ```
 
@@ -88,10 +88,10 @@ Drop a `config.json` with only the keys you want to change in either place (the 
 | `frame` | `true` | Draws a rounded frame around the avatar |
 | `frameRows` | `4` | Avatar height in terminal rows. The prompt grows to match it |
 | `minEditorWidth` | `40` | Below this prompt width the avatar hides to leave room for typing |
-| `grandmaAfterMs` | `180000` | Idle time before the grandma appears. Use `0` to disable it |
+| `grandmaAfterMs` | `30000` | Idle time before the grandma appears (any key resets it). Use `0` to disable it |
 | `farewellPattern` | Spanish and English goodbyes | Regex (case-insensitive) that triggers `bye` |
 | `accent` | `"auto"` | Rose and headband color: `"auto"` follows `/gentle:customize`; or `"pink"`, `"cyan"`, `"yellow"`, `"green"`, or a hex like `"#ff6ec7"` |
-| `readingSpeed` | `4` | Words per second used to pace `talk` |
+| `readingSpeed` | `4` | Words per second used to pace the `/emote talk` preview |
 | `holdDuration` | see `config.json` | How long `hi`, `success`, `failure` and `bye` stay on screen (ms) |
 | `emotes` | `gentleman` | Emote set per model or thinking level (see below) |
 | `terminals` | see `config.json` | Renderer per terminal (see below) |
@@ -169,6 +169,10 @@ Entries are glob patterns against the model ID and/or thinking level. The last m
   ]
 }
 ```
+
+### A YOLO look for your avatar
+
+Ship a twin set named `<your-set>-yolo` (for example `my-avatar-yolo/`) next to it. While Gentle Shell's YOLO mode is on, every frame comes from the twin instead; states missing there simply don't animate, so copy the whole set. Without a twin, your avatar just keeps its normal look.
 
 ### Text-only avatars
 
