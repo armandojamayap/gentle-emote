@@ -73,7 +73,7 @@ Any new prompt cancels a preview, so the avatar always follows the real agent.
 
 The subagent scene comes from the `agent` argument of the tool call, so new agents that follow the same naming get the right scene for free. A call without an agent name (for example, continuing a task by id) shows `delegate`.
 
-The subagent scenes, `jobs`, `yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states are simply never triggered. In plain Pi the rest works the same.
+The subagent scenes, `jobs`, `yolo`, `super-yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states are simply never triggered. In plain Pi the rest works the same.
 
 The rose on his chest follows your accent color (Gentle Shell's `/gentle:customize`), and so does the YOLO headband.
 

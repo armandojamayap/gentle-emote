@@ -15,5 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install host packages used by the tests
+        run: npm install --no-save @earendil-works/pi-coding-agent@1.4.0 @earendil-works/pi-tui@1.2.0
       - name: Test
         run: npm test

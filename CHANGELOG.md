@@ -2,7 +2,7 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
-## Unreleased
+## gentle-emote v0.1.4
 
 ### Fixed
 - **Super YOLO** — Gentle Shell's `super-yolo` mode rests on the sun. `yolo` mode keeps the rocket. `read()` reports ON for both, so the mode is what picks the picture.
