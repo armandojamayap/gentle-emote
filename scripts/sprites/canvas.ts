@@ -143,10 +143,11 @@ const GLYPHS: Record<string, string[]> = {
   H: ["#.#", "#.#", "###", "#.#", "#.#"],
   U: ["#.#", "#.#", "#.#", "#.#", "###"],
   Y: ["#.#", "#.#", ".#.", ".#.", ".#."],
-  N: ["#.#", "###", "###", "#.#", "#.#"],
+  N: ["#..#", "##.#", "#.##", "#..#", "#..#"],
   Z: ["###", "..#", ".#.", "#..", "###"],
   O: [".#.", "#.#", "#.#", "#.#", ".#."],
   L: ["#..", "#..", "#..", "#..", "###"],
+  R: ["##.", "#.#", "##.", "#.#", "#.#"],
   "%": ["#.#", "..#", ".#.", "#..", "#.#"],
   "/": ["..#", "..#", ".#.", "#..", "#.."],
   "?": ["##.", "..#", ".#.", "...", ".#."],
@@ -162,10 +163,14 @@ export function text(cv: Canvas, value: string, x: number, y: number, color: str
   for (const ch of value) {
     const glyph = GLYPHS[ch];
     if (glyph) cv.blit(glyph, cursor, y, { "#": color });
-    cursor += 4;
+    cursor += glyphWidth(ch) + 1;
   }
 }
 
+function glyphWidth(ch: string): number {
+  return GLYPHS[ch]?.[0]?.length ?? 3;
+}
+
 export function textWidth(value: string): number {
-  return value.length * 4 - 1;
+  return [...value].reduce((sum, ch) => sum + glyphWidth(ch) + 1, 0) - 1;
 }

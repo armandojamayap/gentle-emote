@@ -1,7 +1,11 @@
 import { test, mock } from "node:test";
 import assert from "node:assert/strict";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Animator } from "../src/animator.ts";
+import { findYoloSetDir } from "../src/emotes.ts";
 import extension, { toolNameToState } from "../src/index.ts";
+import { EMOTE_STATES } from "../src/types.ts";
 import type { Config, EmoteState } from "../src/types.ts";
 
 test("Gentle Shell activity tools map to their scenes", () => {
@@ -75,6 +79,51 @@ test("an idle variant replaces the resting pose and blinks with its own frame", 
   } finally {
     mock.timers.reset();
   }
+});
+
+test("every animated state shows a frame when entered", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  try {
+    const shown: string[] = [];
+    const renderer = {
+      ...fakeRenderer({}),
+      getFrameFiles: () => ["a.png", "b.png"],
+      showFrame: (state: EmoteState) => { shown.push(state); return true; },
+      showCycleFrame: (state: EmoteState) => { shown.push(state); return true; },
+      showTalkFrame: () => { shown.push("talk"); return true; },
+    };
+    const animator = new Animator(config, renderer as any);
+    for (const state of EMOTE_STATES) {
+      animator.transitionTo(state);
+      assert.ok(shown.includes(state), `${state} showed no frame`);
+    }
+    animator.stop();
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("talking ends half a second after the reply stops streaming, however long it was", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval", "Date"] });
+  try {
+    const animator = new Animator(config, fakeRenderer({}) as any);
+    animator.transitionTo("talk");
+    animator.onTalkToken("word ".repeat(400));
+    animator.endTalk();
+    mock.timers.tick(499);
+    assert.equal(animator.currentState, "talk");
+    mock.timers.tick(1);
+    assert.notEqual(animator.currentState, "talk");
+    animator.stop();
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("the Gentleman ships a YOLO twin set; sets without one have none", () => {
+  const extDir = join(dirname(fileURLToPath(import.meta.url)), "..");
+  assert.equal(findYoloSetDir("gentleman", extDir, "/nonexistent"), join(extDir, "emotes", "gentleman-yolo"));
+  assert.equal(findYoloSetDir("ascii", extDir, "/nonexistent"), null);
 });
 
 test("the YOLO adapter is only read and observed, never toggled", async () => {

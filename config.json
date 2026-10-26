@@ -16,7 +16,7 @@
   "blinkInterval": [3000, 6000],
   "talkTickMs": 120,
   "cycleMs": 500,
-  "grandmaAfterMs": 180000,
+  "grandmaAfterMs": 30000,
   "accent": "auto",
   "emotes": [
     { "model": "*", "emote-set": "gentleman" }

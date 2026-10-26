@@ -6,9 +6,9 @@ import { BANNER_ACCENTS, createAccentTransform } from "../../src/accent.ts";
 
 /**
  * Contact sheet of every frame, upscaled, recolored and on a terminal-like
- * background: `node scripts/sprites/preview.ts [accent] [out.png]`.
+ * background: `node scripts/sprites/preview.ts [accent] [out.png] [states] [set]`.
  */
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "emotes", "gentleman");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "emotes", process.argv[5] ?? "gentleman");
 const accentName = process.argv[2] ?? "pink";
 const out = process.argv[3] ?? join(root, "..", "..", `preview-${accentName}.png`);
 const transform = createAccentTransform(BANNER_ACCENTS[accentName] ?? BANNER_ACCENTS.pink!);

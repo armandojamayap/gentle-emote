@@ -1,11 +1,13 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Canvas, text, textWidth } from "./canvas.ts";
-import { C, KEY, W, drawArm, drawBust, drawPalm, drawRaisedArm, newCanvas } from "./gentleman.ts";
+import { C, KEY, W, drawArm, drawBust, drawPalm, drawRaisedArm, headband, newCanvas, setYoloLook, sunglasses } from "./gentleman.ts";
 import type { Look } from "./gentleman.ts";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "emotes", "gentleman");
+/** Must match YOLO_SET_SUFFIX in src/emotes.ts: the runtime swaps to `<set>-yolo` while YOLO is on. */
+const YOLO_SET_SUFFIX = "-yolo";
 
 /** Bust centered in the canvas; scenes with props shift it left. */
 const CENTER = 24;
@@ -198,11 +200,56 @@ add("think", "think_hard", (cv) => {
   bubbleText(cv, "?", 38, 0, "down-left");
 });
 
-// talk: mouth shapes, the mustache bounces on wide vowels
-add("talk", "talk_close", bust({ mouth: "closed" }));
-add("talk", "talk_small", bust({ mouth: "small" }));
-add("talk", "talk_mid", bust({ mouth: "mid", mustacheLift: 1 }));
-add("talk", "talk_wide", bust({ mouth: "wide", mustacheLift: 1 }));
+// talk: live on stream, headphones and a podcast mic; ON AIR lights up while he speaks
+const ON_AIR = "#e5484d";
+const ON_AIR_DIM = "#5a2226";
+
+function headphones(cv: Canvas, hx: number, hy: number) {
+  cv.rect(hx + 3, hy - 1, 16, 2, C.pan);
+  cv.rect(hx + 1, hy + 1, 2, 3, C.pan);
+  cv.rect(hx + 19, hy + 1, 2, 3, C.pan);
+  for (const x of [hx - 2, hx + 20]) {
+    cv.rect(x, hy + 4, 4, 9, C.pan);
+    cv.rect(x + 1, hy + 5, 2, 7, C.panRim);
+  }
+}
+
+function podcastMic(cv: Canvas, x: number, y: number) {
+  cv.path([[x + 2, y + 10], [x + 8, y + 15], [x + 12, y + 22]], C.pan, 2);
+  cv.rect(x, y, 6, 10, C.pan);
+  cv.rect(x + 1, y + 1, 4, 8, C.panRim);
+  for (let gy = y + 2; gy < y + 9; gy += 2) cv.rect(x + 1, gy, 4, 1, C.pan);
+}
+
+function onAirSign(cv: Canvas, x: number, y: number, lit: boolean) {
+  cv.rect(x, y, 15, 14, C.pan);
+  cv.rect(x + 1, y + 1, 13, 12, lit ? ON_AIR : ON_AIR_DIM);
+  const ink = lit ? C.white : C.smoke;
+  text(cv, "ON", x + 3, y + 1, ink);
+  text(cv, "AIR", x + 2, y + 7, ink);
+}
+
+function soundWaves(cv: Canvas, x: number, y: number, count: number) {
+  for (let i = 0; i < count; i++) {
+    const wx = x + i * 3;
+    const r = 2 + i;
+    cv.set(wx, y - r, C.code1);
+    cv.rect(wx + 1, y - r + 1, 1, r * 2 - 1, C.code1);
+    cv.set(wx, y + r, C.code1);
+  }
+}
+
+for (const [name, mouth, waves] of [
+  ["talk_close", "closed", 0], ["talk_small", "small", 1], ["talk_mid", "mid", 2], ["talk_wide", "wide", 3],
+] as const) {
+  add("talk", name, (cv) => {
+    const { hx, hy } = drawBust(cv, CENTER - 5, { mouth, mustacheLift: waves >= 2 ? 1 : 0, eyes: waves === 3 ? "happy" : "open" });
+    headphones(cv, hx, hy);
+    podcastMic(cv, hx + 20, hy + 16);
+    onAirSign(cv, 33, 1, waves > 0);
+    soundWaves(cv, hx + 28, hy + 21, waves);
+  });
+}
 
 // read: a huge magnifying glass sweeping across the glasses
 for (const [name, dx] of [["read_1", 14], ["read_2", 9], ["read_3", 4]] as const) {
@@ -473,28 +520,6 @@ for (const [name, lines] of [["remember_1", 2], ["remember_2", 4]] as const) {
 }
 
 // yolo (mode, replaces idle): sunglasses, YOLO headband and a rocket
-function sunglasses(cv: Canvas, hx: number, hy: number, glint: boolean) {
-  cv.rect(hx + 2, hy + 9, 8, 4, C.ink);
-  cv.rect(hx + 12, hy + 9, 8, 4, C.ink);
-  cv.rect(hx + 10, hy + 9, 2, 1, C.ink);
-  cv.rect(hx + 1, hy + 9, 1, 1, C.ink);
-  cv.rect(hx + 20, hy + 9, 1, 1, C.ink);
-  if (glint) {
-    cv.set(hx + 3, hy + 10, C.white);
-    cv.set(hx + 4, hy + 10, C.white);
-    cv.set(hx + 13, hy + 10, C.white);
-  } else {
-    cv.set(hx + 8, hy + 11, C.wire);
-    cv.set(hx + 18, hy + 11, C.wire);
-  }
-}
-
-function headband(cv: Canvas, hx: number, hy: number) {
-  cv.rect(hx, hy + 2, 22, 7, KEY.base);
-  cv.rect(hx, hy + 8, 22, 1, KEY.shade);
-  text(cv, "YOLO", hx + 4, hy + 3, C.white);
-}
-
 function rocket(cv: Canvas, x: number, y: number, flame: number) {
   cv.rect(x + 2, y + 2, 5, 11, C.white);
   cv.rect(x + 3, y, 3, 2, C.robotLed);
@@ -750,16 +775,23 @@ const emotesConfig = {
   },
 };
 
-rmSync(OUT, { recursive: true, force: true });
-let count = 0;
-for (const [state, named] of Object.entries(frames)) {
-  mkdirSync(join(OUT, state), { recursive: true });
-  for (const [name, draw] of Object.entries(named)) {
-    const cv = newCanvas();
-    draw(cv);
-    writeFileSync(join(OUT, state, `${name}.png`), cv.toPng());
-    count++;
+function writeSet(outDir: string, yolo: boolean) {
+  setYoloLook(yolo);
+  rmSync(outDir, { recursive: true, force: true });
+  let count = 0;
+  for (const [state, named] of Object.entries(frames)) {
+    mkdirSync(join(outDir, state), { recursive: true });
+    for (const [name, draw] of Object.entries(named)) {
+      const cv = newCanvas();
+      draw(cv);
+      writeFileSync(join(outDir, state, `${name}.png`), cv.toPng());
+      count++;
+    }
   }
+  writeFileSync(join(outDir, "emotes.json"), `${JSON.stringify(emotesConfig, null, 2)}\n`);
+  console.log(`${basename(outDir)}: ${count} frames in ${Object.keys(frames).length} states → ${outDir}`);
+  setYoloLook(false);
 }
-writeFileSync(join(OUT, "emotes.json"), `${JSON.stringify(emotesConfig, null, 2)}\n`);
-console.log(`gentleman: ${count} frames in ${Object.keys(frames).length} states → ${OUT}`);
+
+writeSet(OUT, false);
+writeSet(`${OUT}${YOLO_SET_SUFFIX}`, true);

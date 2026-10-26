@@ -8,7 +8,7 @@ import type { Config, EmoteState, ResolvedRenderer } from "./types.ts";
 import type { Renderer } from "./renderer.ts";
 import { log, setDebug } from "./log.ts";
 import { loadLayeredConfig } from "./config.ts";
-import { resolveEmoteSet, findEmoteSetDir, loadEmotesConfig, EXTENSION_NAME } from "./emotes.ts";
+import { resolveEmoteSet, findEmoteSetDir, findYoloSetDir, loadEmotesConfig, EXTENSION_NAME } from "./emotes.ts";
 import { bannerConfigCandidates, createAccentTransform, resolveAccent } from "./accent.ts";
 import type { Rgb } from "./accent.ts";
 import { KittyRenderer } from "./render_kitty.ts";
@@ -162,13 +162,14 @@ export default function (pi: ExtensionAPI) {
   let runUsedTools = false;
   let stopTerminalInput: (() => void) | null = null;
   let watchedBannerFiles: string[] = [];
+  let yoloOn = false;
 
   const animator = new Animator(config, renderer);
 
   function loadEmoteSet(setName: string) {
     currentEmoteSet = setName;
 
-    const setDir = findEmoteSetDir(setName, extDir, cwd);
+    const setDir = (yoloOn && findYoloSetDir(setName, extDir, cwd)) || findEmoteSetDir(setName, extDir, cwd);
     const isAsciiOnly = existsSync(join(setDir, "ascii.yaml")) && !hasImageFrames(setDir);
 
     if (isAsciiOnly) {
@@ -256,8 +257,13 @@ export default function (pi: ExtensionAPI) {
     const reader = yoloReader;
     if (!reader) return;
     try {
-      const display = await reader.read();
-      if (reader === yoloReader && widgetActive) animator.setIdleVariant(display === "ON" ? "yolo" : null);
+      const on = (await reader.read()) === "ON";
+      if (reader !== yoloReader || !widgetActive || on === yoloOn) return;
+      yoloOn = on;
+      log(`yolo: ${on ? "on" : "off"}`);
+      animator.setIdleVariant(on ? "yolo" : null);
+      loadEmoteSet(currentEmoteSet);
+      refreshCurrentFrame();
     } catch { /* display only */ }
   }
 
@@ -289,6 +295,8 @@ export default function (pi: ExtensionAPI) {
     stopYoloObserve = null;
     yoloReader?.dispose?.();
     yoloReader = null;
+    yoloOn = false;
+    animator.setIdleVariant(null);
   }
 
   /** Activity transitions are suppressed while the goodbye animation owns the avatar. */
@@ -384,6 +392,7 @@ export default function (pi: ExtensionAPI) {
 
     const setName = resolveEmoteSet(ctx.model?.id ?? "", pi.getThinkingLevel(), config.emotes);
     log(`session_start: set="${setName}" dir="${findEmoteSetDir(setName, extDir, cwd)}"`);
+    unwatchYolo();
     loadEmoteSet(setName);
     watchBanner();
 
@@ -404,7 +413,6 @@ export default function (pi: ExtensionAPI) {
     }) ?? null;
 
     widgetActive = true;
-    unwatchYolo();
     watchYolo(ctx);
     if (greetTimer) clearTimeout(greetTimer);
     greetTimer = setTimeout(() => {

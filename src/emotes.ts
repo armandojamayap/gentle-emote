@@ -1,10 +1,19 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { EMOTE_STATES } from "./types.ts";
 import type { EmoteState, EmoteMapping, EmotesConfig, FrameSet, FrameTransform } from "./types.ts";
 
 export const EXTENSION_NAME = "gentle-emote";
 export const DEFAULT_EMOTE_SET = "gentleman";
+/** A set may ship a YOLO twin named `<set>-yolo`; it is shown while Gentle Shell's YOLO mode is on. */
+export const YOLO_SET_SUFFIX = "-yolo";
+
+/** The `<set>-yolo` directory when it exists, otherwise null. */
+export function findYoloSetDir(setName: string, extDir: string, cwd: string): string | null {
+  const yoloName = `${setName}${YOLO_SET_SUFFIX}`;
+  const dir = findEmoteSetDir(yoloName, extDir, cwd);
+  return basename(dir) === yoloName && existsSync(dir) ? dir : null;
+}
 
 /** Pi's agent folder: PI_CODING_AGENT_DIR (Gentle Shell homes, gs-lab) or ~/.pi/agent. */
 export function agentDir(): string {

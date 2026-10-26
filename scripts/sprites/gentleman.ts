@@ -1,4 +1,4 @@
-import { Canvas, sprite } from "./canvas.ts";
+import { Canvas, sprite, text } from "./canvas.ts";
 import type { Palette } from "./canvas.ts";
 
 /** Accent keys: recolored at load time to the /gentle:customize color (see src/accent.ts). */
@@ -209,11 +209,45 @@ function drawCurlers(cv: Canvas, hx: number, hy: number) {
   }
 }
 
+// --- YOLO look: sunglasses and the accent-colored headband ---
+
+export function sunglasses(cv: Canvas, hx: number, hy: number, glint: boolean) {
+  cv.rect(hx + 2, hy + 9, 8, 4, C.ink);
+  cv.rect(hx + 12, hy + 9, 8, 4, C.ink);
+  cv.rect(hx + 10, hy + 9, 2, 1, C.ink);
+  cv.rect(hx + 1, hy + 9, 1, 1, C.ink);
+  cv.rect(hx + 20, hy + 9, 1, 1, C.ink);
+  if (glint) {
+    cv.set(hx + 3, hy + 10, C.white);
+    cv.set(hx + 4, hy + 10, C.white);
+    cv.set(hx + 13, hy + 10, C.white);
+  } else {
+    cv.set(hx + 8, hy + 11, C.wire);
+    cv.set(hx + 18, hy + 11, C.wire);
+  }
+}
+
+export function headband(cv: Canvas, hx: number, hy: number) {
+  cv.rect(hx, hy + 2, 22, 7, KEY.base);
+  cv.rect(hx, hy + 8, 22, 1, KEY.shade);
+  text(cv, "YOLO", hx + 4, hy + 3, C.white);
+}
+
+/** When on, every head is drawn with the YOLO look (used to build the `-yolo` set). */
+let yoloLook = false;
+export function setYoloLook(on: boolean) {
+  yoloLook = on;
+}
+
 export function drawHead(cv: Canvas, hx: number, hy: number, look: Look = {}) {
   cv.blit(HEAD, hx, hy, headPalette(look));
   drawEyes(cv, hx, hy, look);
   drawMouth(cv, hx, hy, look);
   drawMustache(cv, hx, hy, look);
+  if (yoloLook) {
+    if (!look.grandma) headband(cv, hx, hy);
+    sunglasses(cv, hx, hy, look.eyes === "blink" || look.eyes === "wink");
+  }
   if (look.grandma) drawCurlers(cv, hx, hy);
   if (look.soot) {
     // Singed hair tufts sticking up.

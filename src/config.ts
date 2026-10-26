@@ -49,7 +49,7 @@ const DEFAULTS: Config = {
   blinkInterval: [3000, 6000],
   talkTickMs: 120,
   cycleMs: 500,
-  grandmaAfterMs: 180_000,
+  grandmaAfterMs: 30_000,
   accent: "auto",
   farewellPattern: "^\\s*(chau|chao|adi[oó]s|bye|goodbye|nos vemos|hasta (luego|ma[nñ]ana)|me voy|cerr[aá] (la )?sesi[oó]n|cerremos)\\b",
   emotes: [{ model: "*", "emote-set": "gentleman" }],
