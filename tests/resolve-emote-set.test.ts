@@ -1,26 +1,52 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveEmoteSet } from "../src/emotes.ts";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { findEmoteSetDir, resolveEmoteSet } from "../src/emotes.ts";
+
+test("custom sets resolve project first, then user; unknown names fall back to the Gentleman", () => {
+  const root = mkdtempSync(join(tmpdir(), "gentle-emote-sets-"));
+  const previous = process.env.PI_CODING_AGENT_DIR;
+  try {
+    const agent = join(root, "agent");
+    const cwd = join(root, "project");
+    const ext = join(root, "ext");
+    process.env.PI_CODING_AGENT_DIR = agent;
+    mkdirSync(join(agent, "extensions", "gentle-emote", "emotes", "mine"), { recursive: true });
+    mkdirSync(join(ext, "emotes", "gentleman"), { recursive: true });
+    assert.equal(findEmoteSetDir("mine", ext, cwd), join(agent, "extensions", "gentle-emote", "emotes", "mine"));
+
+    mkdirSync(join(cwd, ".pi", "extensions", "gentle-emote", "emotes", "mine"), { recursive: true });
+    assert.equal(findEmoteSetDir("mine", ext, cwd), join(cwd, ".pi", "extensions", "gentle-emote", "emotes", "mine"));
+
+    assert.equal(findEmoteSetDir("typo-set", ext, cwd), join(ext, "emotes", "gentleman"));
+  } finally {
+    if (previous === undefined) delete process.env.PI_CODING_AGENT_DIR;
+    else process.env.PI_CODING_AGENT_DIR = previous;
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("model-only entries behave like main (thinking level defaults to *)", () => {
   const cfg = [{ model: "*claude*", "emote-set": "my-avatar" }];
   assert.equal(resolveEmoteSet("claude-opus", "off", cfg), "my-avatar");
   assert.equal(resolveEmoteSet("claude-opus", "high", cfg), "my-avatar");
-  assert.equal(resolveEmoteSet("gpt-5", "high", cfg), "default");
+  assert.equal(resolveEmoteSet("gpt-5", "high", cfg), "gentleman");
 });
 
 test("thinking-level-only entries route by level for any model", () => {
   const cfg = [{ "thinking-level": "high", "emote-set": "focused" }];
   assert.equal(resolveEmoteSet("claude-opus", "high", cfg), "focused");
   assert.equal(resolveEmoteSet("gpt-5", "high", cfg), "focused");
-  assert.equal(resolveEmoteSet("claude-opus", "medium", cfg), "default");
+  assert.equal(resolveEmoteSet("claude-opus", "medium", cfg), "gentleman");
 });
 
 test("combined entries require both selectors to match", () => {
   const cfg = [{ model: "*claude*", "thinking-level": "high", "emote-set": "deep-focus" }];
   assert.equal(resolveEmoteSet("claude-opus", "high", cfg), "deep-focus");
-  assert.equal(resolveEmoteSet("gpt-5", "high", cfg), "default");
-  assert.equal(resolveEmoteSet("claude-opus", "medium", cfg), "default");
+  assert.equal(resolveEmoteSet("gpt-5", "high", cfg), "gentleman");
+  assert.equal(resolveEmoteSet("claude-opus", "medium", cfg), "gentleman");
 });
 
 test("last match wins across dimensions (ordering decides layering)", () => {
@@ -49,7 +75,7 @@ test("matches are case-insensitive", () => {
 });
 
 test("falls back to default when nothing matches", () => {
-  assert.equal(resolveEmoteSet("gpt-5", "high", [{ model: "*claude*", "emote-set": "x" }]), "default");
+  assert.equal(resolveEmoteSet("gpt-5", "high", [{ model: "*claude*", "emote-set": "x" }]), "gentleman");
 });
 
 test("warns only on same-dimension duplicate matches", (t) => {

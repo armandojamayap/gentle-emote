@@ -4,6 +4,7 @@ import { EMOTE_STATES } from "./types.ts";
 import type { EmoteState, EmoteMapping, EmotesConfig, FrameSet, FrameTransform } from "./types.ts";
 
 export const EXTENSION_NAME = "gentle-emote";
+export const DEFAULT_EMOTE_SET = "gentleman";
 
 /** Pi's agent folder: PI_CODING_AGENT_DIR (Gentle Shell homes, gs-lab) or ~/.pi/agent. */
 export function agentDir(): string {
@@ -40,13 +41,13 @@ export function resolveEmoteSet(modelId: string, thinkingLevel: string, emotes: 
     console.error(`[${EXTENSION_NAME}] Warning: multiple thinking-level patterns matched "${thinkingLevel}", using last match.`);
   }
 
-  return matched ?? "default";
+  return matched ?? DEFAULT_EMOTE_SET;
 }
 
 // --- Emote Set Location ---
 
 export function findEmoteSetDir(setName: string, extDir: string, cwd: string): string {
-  // Priority: project → user → extension → fallback to default
+  // Priority: project → user → extension → fallback to the built-in set
   const projectDir = join(cwd, ".pi", "extensions", EXTENSION_NAME, "emotes", setName);
   if (existsSync(projectDir)) return projectDir;
 
@@ -56,11 +57,7 @@ export function findEmoteSetDir(setName: string, extDir: string, cwd: string): s
   const extSetDir = join(extDir, "emotes", setName);
   if (existsSync(extSetDir)) return extSetDir;
 
-  // Fallback to default
-  const defaultDir = join(extDir, "emotes", "default");
-  if (existsSync(defaultDir)) return defaultDir;
-
-  return join(extDir, "emotes", "default");
+  return join(extDir, "emotes", DEFAULT_EMOTE_SET);
 }
 
 // --- Frame Loading ---
