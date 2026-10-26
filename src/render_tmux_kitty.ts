@@ -1,6 +1,6 @@
-import { KittyRenderer } from "./render_kitty.js";
-import type { ImageDims } from "./render_image.js";
-import { wrapTmuxPassthrough } from "./tmux.js";
+import { KittyRenderer } from "./render_kitty.ts";
+import type { ImageDims } from "./render_image.ts";
+import { wrapTmuxPassthrough } from "./tmux.ts";
 
 /**
  * Kitty renderer for use inside tmux with `allow-passthrough on`.

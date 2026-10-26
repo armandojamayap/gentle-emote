@@ -1,6 +1,6 @@
-import { ITermRenderer } from "./render_iterm.js";
-import type { ImageDims } from "./render_image.js";
-import { wrapTmuxPassthrough } from "./tmux.js";
+import { ITermRenderer } from "./render_iterm.ts";
+import type { ImageDims } from "./render_image.ts";
+import { wrapTmuxPassthrough } from "./tmux.ts";
 
 /**
  * iTerm2 renderer for use inside tmux with `allow-passthrough on`.

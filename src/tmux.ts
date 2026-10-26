@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { log } from "./log.js";
+import { log } from "./log.ts";
 
 type Protocol = "kitty" | "iterm2" | "ascii";
 

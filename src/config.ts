@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import type { Config, EmoteMapping, TerminalMapping } from "./types.js";
-import { DEFAULT_WIDGET_THEME, sanitizeWidgetTheme } from "./theme.js";
+import type { Config, EmoteMapping, TerminalMapping } from "./types.ts";
+import { agentDir, EXTENSION_NAME } from "./emotes.ts";
 
 export interface ConfigResult {
   config: Config;
@@ -39,14 +39,20 @@ function loadJsonFile(path: string): any | null {
 const DEFAULTS: Config = {
   enabled: true,
   debug: false,
-  size: 8,
+  size: 10,
+  placement: "beside-editor",
+  frame: true,
+  frameRows: 4,
+  minEditorWidth: 40,
   readingSpeed: 4,
-  hideBelow: 40,
-  holdDuration: { hi: 2000, success: 1200, failure: 1200 },
+  holdDuration: { hi: 2400, success: 1600, failure: 2400, bye: 6000 },
   blinkInterval: [3000, 6000],
   talkTickMs: 120,
   cycleMs: 500,
-  emotes: [{ model: "*", "emote-set": "default" }],
+  grandmaAfterMs: 180_000,
+  accent: "auto",
+  farewellPattern: "^\\s*(chau|chao|adi[oó]s|bye|goodbye|nos vemos|hasta (luego|ma[nñ]ana)|me voy|cerr[aá] (la )?sesi[oó]n|cerremos)\\b",
+  emotes: [{ model: "*", "emote-set": "gentleman" }],
   terminals: [
     { match: "zellij", render: "ascii" },
     { match: "tmux", render: "auto" },
@@ -55,7 +61,6 @@ const DEFAULTS: Config = {
     { match: "ghostty", render: "kitty" },
     { match: "warpterminal", render: "kitty" },
   ],
-  theme: { ...DEFAULT_WIDGET_THEME },
 };
 
 /**
@@ -92,11 +97,10 @@ export function loadLayeredConfig(extDir: string, cwd: string): ConfigResult {
   const extConfig = loadJsonFile(join(extDir, "config.json"));
 
   // Layer 2: User global config
-  const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? "";
-  const userConfig = loadJsonFile(join(homeDir, ".pi", "agent", "extensions", "pi-emote", "config.json"));
+  const userConfig = loadJsonFile(join(agentDir(), "extensions", EXTENSION_NAME, "config.json"));
 
   // Layer 3: Project config (highest priority)
-  const projectConfig = loadJsonFile(join(cwd, ".pi", "extensions", "pi-emote", "config.json"));
+  const projectConfig = loadJsonFile(join(cwd, ".pi", "extensions", EXTENSION_NAME, "config.json"));
 
   // Deep merge in priority order
   let merged = DEFAULTS;
@@ -120,8 +124,10 @@ export function loadLayeredConfig(extDir: string, cwd: string): ConfigResult {
     projectConfig?.terminals,
   );
 
-  // "theme" — deep-merged above, then validated: warn + fall back to defaults
-  merged.theme = sanitizeWidgetTheme(merged.theme);
+  if (merged.placement !== "beside-editor" && merged.placement !== "above-editor") {
+    console.error(`[${EXTENSION_NAME}] Warning: invalid "placement" "${String(merged.placement)}", using "beside-editor".`);
+    merged.placement = "beside-editor";
+  }
 
   // Track which terminal match keys were explicitly set by user or project config
   const userConfiguredTerminals = new Set<string>();

@@ -1,20 +1,25 @@
 {
   "enabled": true,
   "debug": false,
-  "size": 8,
+  "size": 10,
+  "placement": "beside-editor",
+  "frame": true,
+  "frameRows": 4,
+  "minEditorWidth": 40,
   "readingSpeed": 4,
-  "hideBelow": 40,
   "holdDuration": {
-    "hi": 2000,
-    "success": 1200,
-    "failure": 1200
+    "hi": 2400,
+    "success": 1600,
+    "failure": 2400,
+    "bye": 6000
   },
   "blinkInterval": [3000, 6000],
   "talkTickMs": 120,
   "cycleMs": 500,
+  "grandmaAfterMs": 180000,
+  "accent": "auto",
   "emotes": [
-    { "model": "*", "emote-set": "default" },
-    { "model": "*claude*", "emote-set": "red" }
+    { "model": "*", "emote-set": "gentleman" }
   ],
   "terminals": [
     { "match": "zellij", "render": "ascii" },
@@ -23,18 +28,5 @@
     { "match": "wezterm", "render": "iterm2" },
     { "match": "ghostty", "render": "kitty" },
     { "match": "warpterminal", "render": "kitty" }
-  ],
-  "theme": {
-    "model-name": "thinking-level-color",
-    "progress-bar": {
-      "default": "text",
-      "cache-hit": "success",
-      "cache-miss": "error",
-      "almost-full": "warning"
-    },
-    "token-info": "dim",
-    "working-directory": "warning",
-    "border": "thinking-level-color",
-    "vertical-separator": "thinking-level-color"
-  }
+  ]
 }

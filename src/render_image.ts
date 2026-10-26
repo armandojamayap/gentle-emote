@@ -1,9 +1,9 @@
 import type { TUI } from "@earendil-works/pi-tui";
 import { getImageDimensions, calculateImageRows, getCellDimensions } from "@earendil-works/pi-tui";
-import type { EmoteState, EmotesConfig, FrameSet } from "./types.js";
-import type { Renderer, RenderedFrame } from "./renderer.js";
-import { discoverFrames } from "./emotes.js";
-import { log } from "./log.js";
+import type { EmoteState, EmotesConfig, FrameSet, FrameTransform } from "./types.ts";
+import type { Renderer, RenderedFrame } from "./renderer.ts";
+import { discoverFrames } from "./emotes.ts";
+import { log } from "./log.ts";
 
 // --- Helpers ---
 
@@ -47,8 +47,12 @@ export abstract class BaseImageRenderer implements Renderer {
     this.tuiRef = tui;
   }
 
-  loadFrames(emoteSetDir: string, _extDir: string) {
-    this.frameMap = discoverFrames(emoteSetDir);
+  loadFrames(emoteSetDir: string, _extDir: string, transform?: FrameTransform) {
+    this.frameMap = discoverFrames(emoteSetDir, transform);
+  }
+
+  getFrameFiles(state: EmoteState): string[] {
+    return this.frameMap.get(state)?.files ?? [];
   }
 
   getRenderedFrame(): RenderedFrame | null {

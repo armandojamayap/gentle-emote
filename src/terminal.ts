@@ -1,7 +1,7 @@
 import { getCapabilities } from "@earendil-works/pi-tui";
-import type { TerminalMapping, ResolvedRenderer } from "./types.js";
-import { checkTmuxPassthrough, detectOuterTerminal } from "./tmux.js";
-import { log } from "./log.js";
+import type { TerminalMapping, ResolvedRenderer } from "./types.ts";
+import { checkTmuxPassthrough, detectOuterTerminal } from "./tmux.ts";
+import { log } from "./log.ts";
 
 type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "ascii";
 
@@ -96,7 +96,7 @@ function resolveMultiplexer(
     warningLevel: "info",
     warning: isUserConfigured
       ? null
-      : `[pi-emote] ${label} detected. Image passthrough not supported... yet! Defaulting to ASCII.`,
+      : `[gentle-emote] ${label} detected. Image passthrough not supported... yet! Defaulting to ASCII.`,
   };
 }
 
@@ -113,7 +113,7 @@ function resolveTmux(
       ...base,
       protocol: "ascii",
       warning:
-        "[pi-emote] tmux detected. Add 'set -g allow-passthrough on' and 'set -ga update-environment TERM_PROGRAM' to tmux.conf to enable image avatar. Defaulting to ASCII.",
+        "[gentle-emote] tmux detected. Add 'set -g allow-passthrough on' and 'set -ga update-environment TERM_PROGRAM' to tmux.conf to enable image avatar. Defaulting to ASCII.",
     };
   }
 
@@ -126,7 +126,7 @@ function resolveTmux(
       ...base,
       protocol: "ascii",
       warning:
-        "[pi-emote] tmux passthrough enabled but could not detect outer terminal. Defaulting to ASCII.",
+        "[gentle-emote] tmux passthrough enabled but could not detect outer terminal. Defaulting to ASCII.",
     };
   }
 
@@ -140,7 +140,7 @@ function resolveTmux(
     ...base,
     protocol: "ascii",
     warning:
-      `[pi-emote] tmux + ${outer} detected. No pane-safe image renderer available. Defaulting to ASCII. Set render to \"iterm2\" to opt in (experimental).`,
+      `[gentle-emote] tmux + ${outer} detected. No pane-safe image renderer available. Defaulting to ASCII. Set render to \"iterm2\" to opt in (experimental).`,
   };
 }
 

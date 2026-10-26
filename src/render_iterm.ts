@@ -1,6 +1,6 @@
 import { encodeITerm2 } from "@earendil-works/pi-tui";
-import { BaseImageRenderer } from "./render_image.js";
-import type { ImageDims } from "./render_image.js";
+import { BaseImageRenderer } from "./render_image.ts";
+import type { ImageDims } from "./render_image.ts";
 
 /**
  * iTerm2 inline image protocol renderer.

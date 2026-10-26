@@ -1,6 +1,15 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import type { EmoteState, EmoteMapping, EmotesConfig, FrameSet } from "./types.js";
+import { EMOTE_STATES } from "./types.ts";
+import type { EmoteState, EmoteMapping, EmotesConfig, FrameSet, FrameTransform } from "./types.ts";
+
+export const EXTENSION_NAME = "gentle-emote";
+
+/** Pi's agent folder: PI_CODING_AGENT_DIR (Gentle Shell homes, gs-lab) or ~/.pi/agent. */
+export function agentDir(): string {
+  const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? "";
+  return process.env.PI_CODING_AGENT_DIR || join(homeDir, ".pi", "agent");
+}
 
 // --- Glob Matching ---
 
@@ -25,10 +34,10 @@ export function resolveEmoteSet(modelId: string, thinkingLevel: string, emotes: 
   }
 
   if (modelMatchCount > 1) {
-    console.error(`[pi-emote] Warning: multiple model patterns matched model "${modelId}", using last match.`);
+    console.error(`[${EXTENSION_NAME}] Warning: multiple model patterns matched model "${modelId}", using last match.`);
   }
   if (thinkingMatchCount > 1) {
-    console.error(`[pi-emote] Warning: multiple thinking-level patterns matched "${thinkingLevel}", using last match.`);
+    console.error(`[${EXTENSION_NAME}] Warning: multiple thinking-level patterns matched "${thinkingLevel}", using last match.`);
   }
 
   return matched ?? "default";
@@ -37,13 +46,11 @@ export function resolveEmoteSet(modelId: string, thinkingLevel: string, emotes: 
 // --- Emote Set Location ---
 
 export function findEmoteSetDir(setName: string, extDir: string, cwd: string): string {
-  const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? "";
-
   // Priority: project → user → extension → fallback to default
-  const projectDir = join(cwd, ".pi", "extensions", "pi-emote", "emotes", setName);
+  const projectDir = join(cwd, ".pi", "extensions", EXTENSION_NAME, "emotes", setName);
   if (existsSync(projectDir)) return projectDir;
 
-  const userDir = join(homeDir, ".pi", "agent", "extensions", "pi-emote", "emotes", setName);
+  const userDir = join(agentDir(), "extensions", EXTENSION_NAME, "emotes", setName);
   if (existsSync(userDir)) return userDir;
 
   const extSetDir = join(extDir, "emotes", setName);
@@ -70,11 +77,10 @@ export function loadEmotesConfig(emoteSetDir: string): EmotesConfig {
   return {};
 }
 
-export function discoverFrames(emoteSetDir: string): Map<EmoteState, FrameSet> {
+export function discoverFrames(emoteSetDir: string, transform?: FrameTransform): Map<EmoteState, FrameSet> {
   const frameMap = new Map<EmoteState, FrameSet>();
-  const states: EmoteState[] = ["hi", "idle", "think", "talk", "read", "write", "tool", "success", "failure", "compact"];
 
-  for (const state of states) {
+  for (const state of EMOTE_STATES) {
     const stateDir = join(emoteSetDir, state);
     if (!existsSync(stateDir)) continue;
 
@@ -82,8 +88,8 @@ export function discoverFrames(emoteSetDir: string): Map<EmoteState, FrameSet> {
     const base64Cache = new Map<string, string>();
 
     for (const file of files) {
-      const data = readFileSync(join(stateDir, file));
-      base64Cache.set(file, data.toString("base64"));
+      const data = readFileSync(join(stateDir, file)).toString("base64");
+      base64Cache.set(file, transform ? transform(data) : data);
     }
 
     frameMap.set(state, { files, base64Cache });

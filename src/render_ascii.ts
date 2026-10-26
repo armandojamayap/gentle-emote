@@ -1,9 +1,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { TUI } from "@earendil-works/pi-tui";
-import type { EmoteState, EmotesConfig } from "./types.js";
-import type { Renderer, RenderedFrame } from "./renderer.js";
-import { log } from "./log.js";
+import { EMOTE_STATES } from "./types.ts";
+import type { EmoteState, EmotesConfig } from "./types.ts";
+import type { Renderer, RenderedFrame } from "./renderer.ts";
+import { log } from "./log.ts";
 
 // --- Minimal YAML parser for ascii.yaml ---
 // Handles: scalars, one-level maps, and arrays of scalars. No YAML library needed.
@@ -64,7 +65,7 @@ function parseSimpleYaml(text: string): AsciiFrameMap {
   function flushObjArray() {
     if (pendingArrKey !== null && pendingArr !== null) {
       if (pendingArr.length === 0) {
-        log(`[pi-emote] Warning: empty frame for '${pendingArrKey}' under '${topKey}'`);
+        log(`[gentle-emote] Warning: empty frame for '${pendingArrKey}' under '${topKey}'`);
       } else {
         if (nestedObj === null) nestedObj = {};
         nestedObj[pendingArrKey] = pendingArr;
@@ -133,7 +134,7 @@ function parseSimpleYaml(text: string): AsciiFrameMap {
           nestedArrs = [];
           // Promote any accumulated flat items to single-element nested arrays
           if (flatArr !== null) {
-            log(`[pi-emote] Warning: mixing single-line and multi-line frames under '${topKey}'`);
+            log(`[gentle-emote] Warning: mixing single-line and multi-line frames under '${topKey}'`);
             for (const item of flatArr) {
               nestedArrs.push([item]);
             }
@@ -149,7 +150,7 @@ function parseSimpleYaml(text: string): AsciiFrameMap {
         curNestedArr!.push(unquote(rawContent));
       } else if (nestedArrs !== null) {
         // Flat item after nested items — wrap in single-element sub-array
-        log(`[pi-emote] Warning: mixing single-line and multi-line frames under '${topKey}'`);
+        log(`[gentle-emote] Warning: mixing single-line and multi-line frames under '${topKey}'`);
         if (curNestedArr !== null && curNestedArr.length > 0) {
           nestedArrs.push(curNestedArr);
         }
@@ -164,7 +165,7 @@ function parseSimpleYaml(text: string): AsciiFrameMap {
         // First array item under this top-level key = flat array
         flatArr = [unquote(rawContent)];
       } else {
-        log(`[pi-emote] Warning: unexpected array item under '${topKey}' (cannot mix named keys and arrays)`);
+        log(`[gentle-emote] Warning: unexpected array item under '${topKey}' (cannot mix named keys and arrays)`);
       }
       continue;
     }
@@ -246,9 +247,7 @@ export class AsciiRenderer implements Renderer {
     const parsed = parseSimpleYaml(yamlText);
     this.frames.clear();
 
-    const states: EmoteState[] = ["hi", "idle", "think", "talk", "read", "write", "tool", "success", "failure", "compact"];
-
-    for (const state of states) {
+    for (const state of EMOTE_STATES) {
       const value = parsed[state];
       if (value === undefined) continue;
 
@@ -364,6 +363,10 @@ export class AsciiRenderer implements Renderer {
 
   getCycleFrameCount(state: EmoteState): number {
     return this.frames.get(state)?.names.length ?? 0;
+  }
+
+  getFrameFiles(state: EmoteState): string[] {
+    return this.frames.get(state)?.names ?? [];
   }
 
   dispose() {

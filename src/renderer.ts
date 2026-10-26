@@ -1,4 +1,4 @@
-import type { EmoteState, EmotesConfig } from "./types.js";
+import type { EmoteState, EmotesConfig, FrameTransform } from "./types.ts";
 import type { TUI } from "@earendil-works/pi-tui";
 
 /**
@@ -12,7 +12,7 @@ import type { TUI } from "@earendil-works/pi-tui";
 export type RenderedFrame =
   | { kind: "image"; sequence: string; rows: number; cursorAdvances: boolean; padMode?: "spaces" | "skip" }
   | { kind: "text"; lines: string[] }
-  | { kind: "placeholder"; lines: string[]; rows: number };
+  | { kind: "placeholder"; lines: string[]; rows: number; cols: number; framed: boolean };
 
 /**
  * Renderer interface — abstracts how emote frames are loaded, stored, and displayed.
@@ -25,8 +25,11 @@ export interface Renderer {
   /** Set the TUI reference for requesting re-renders. */
   setTui(tui: TUI | null): void;
 
-  /** Load frames for an emote set. */
-  loadFrames(emoteSetDir: string, extDir: string): void;
+  /** Load frames for an emote set, optionally rewriting each PNG (accent recolor). */
+  loadFrames(emoteSetDir: string, extDir: string, transform?: FrameTransform): void;
+
+  /** Sorted frame file names for a state (empty when the state has no frames). */
+  getFrameFiles(state: EmoteState): string[];
 
   /** Get the current rendered frame (for the widget to read). */
   getRenderedFrame(): RenderedFrame | null;

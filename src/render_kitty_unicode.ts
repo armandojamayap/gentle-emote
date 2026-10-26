@@ -1,10 +1,12 @@
 import { getCellDimensions, getImageDimensions, calculateImageRows } from "@earendil-works/pi-tui";
 import type { TUI } from "@earendil-works/pi-tui";
-import type { EmoteState, EmotesConfig, FrameSet } from "./types.js";
-import type { Renderer, RenderedFrame } from "./renderer.js";
-import { discoverFrames } from "./emotes.js";
-import { wrapTmuxPassthrough } from "./tmux.js";
-import { log } from "./log.js";
+import type { EmoteState, EmotesConfig, FrameSet, FrameTransform } from "./types.ts";
+import type { Renderer, RenderedFrame } from "./renderer.ts";
+import { discoverFrames } from "./emotes.ts";
+import { wrapTmuxPassthrough } from "./tmux.ts";
+import { log } from "./log.ts";
+import { defaultBorderColor, frameCols, framePngBase64, frameStroke } from "./frame_image.ts";
+import type { CellSize, FrameBox, Rgb } from "./frame_image.ts";
 
 const PLACEHOLDER = "\u{10EEEE}";
 const CHUNK_SIZE = 4096;
@@ -51,9 +53,9 @@ function weightedRandomPick(weights: Record<string, number>): string {
 
 /**
  * Build the kitty graphics transmit sequence (with virtual placement U=1).
- * Handles chunking for large payloads. Wrapped in tmux passthrough.
+ * Handles chunking for large payloads. Wrapped in tmux passthrough when asked.
  */
-function buildTransmitSequence(base64: string, imageId: number, cols: number, rows: number): string {
+function buildTransmitSequence(base64: string, imageId: number, cols: number, rows: number, passthrough: boolean): string {
   const chunks: string[] = [];
   let offset = 0;
 
@@ -76,13 +78,28 @@ function buildTransmitSequence(base64: string, imageId: number, cols: number, ro
     chunks.push(`\x1b_Ga=T,f=100,q=2,U=1,i=${imageId},c=${cols},r=${rows},m=0;\x1b\\`);
   }
 
-  return wrapTmuxPassthrough(chunks.join(""));
+  const sequence = chunks.join("");
+  return passthrough ? wrapTmuxPassthrough(sequence) : sequence;
 }
 
 /**
  * Build the Unicode placeholder grid text for an image.
  * Each line is one row of placeholder characters colored with the image ID.
  */
+/**
+ * Nearest whole row count instead of pi-tui's ceiling: the terminal fits the
+ * image into the c×r box keeping its aspect, so a slight shrink beats a mostly
+ * empty extra row next to the prompt.
+ */
+export function placeholderRows(
+  dims: { widthPx: number; heightPx: number },
+  cols: number,
+  cellDims: { widthPx: number; heightPx: number },
+): number {
+  const exact = (cols * cellDims.widthPx * dims.heightPx) / (dims.widthPx * cellDims.heightPx);
+  return Number.isFinite(exact) && exact > 0 ? Math.max(1, Math.round(exact)) : calculateImageRows(dims, cols, cellDims);
+}
+
 function buildPlaceholderLines(imageId: number, cols: number, rows: number): string[] {
   const r = (imageId >> 16) & 255;
   const g = (imageId >> 8) & 255;
@@ -102,35 +119,70 @@ function buildPlaceholderLines(imageId: number, cols: number, rows: number): str
 }
 
 /**
- * Kitty Unicode Placeholder renderer for tmux.
+ * Kitty Unicode Placeholder renderer (Ghostty, kitty; tmux via passthrough).
  *
  * Uses kitty's virtual placement + Unicode placeholder approach:
- * 1. Transmit image data via DCS passthrough (creates virtual placement)
+ * 1. Transmit image data out of band (creates a virtual placement)
  * 2. Display via U+10EEEE placeholder characters (regular text)
  *
- * This makes the image behave like normal text — tmux constrains it to
- * the pane, and switching sessions clears it naturally.
+ * Because every avatar row is ordinary text, it composes beside other
+ * components (the prompt gutter) and stays inside tmux panes.
  */
-export class TmuxKittyUnicodeRenderer implements Renderer {
+export class KittyUnicodeRenderer implements Renderer {
   private tuiRef: TUI | null = null;
   private frameMap: Map<EmoteState, FrameSet> = new Map();
   private lastShownBase64: string | null = null;
   private currentFrame: RenderedFrame | null = null;
   private size: number;
   private imageId: number;
+  private passthrough: boolean;
+  private frameRows: number;
+  private frameColor: Rgb = defaultBorderColor();
+  private framedCache = new Map<string, string>();
+  private framedCacheKey = "";
+  private lastRawBase64: string | null = null;
 
-  constructor(size: number) {
+  /** `frameRows > 0` boxes every frame in a rounded border exactly that many rows tall. */
+  constructor(size: number, passthrough: boolean, frameRows = 0) {
     this.size = size;
+    this.passthrough = passthrough;
+    this.frameRows = frameRows;
     // Random 24-bit image ID (required for truecolor encoding)
     this.imageId = Math.floor(Math.random() * 0xFFFFFE) + 1;
+  }
+
+  /** Border colour follows the theme; returns true when it changed. */
+  setFrameColor(color: Rgb): boolean {
+    if (color.every((value, index) => value === this.frameColor[index])) return false;
+    this.frameColor = [...color];
+    if (this.frameRows > 0 && this.lastRawBase64) this.show(this.lastRawBase64, true);
+    return true;
+  }
+
+  private framedBase64(base64: string, box: FrameBox, cell: CellSize): string {
+    const key = `${cell.widthPx}x${cell.heightPx}|${box.cols}x${box.rows}|${box.stroke}|${box.color.join(",")}`;
+    if (key !== this.framedCacheKey) {
+      this.framedCache.clear();
+      this.framedCacheKey = key;
+    }
+    let framed = this.framedCache.get(base64);
+    if (!framed) {
+      framed = framePngBase64(base64, box, cell);
+      this.framedCache.set(base64, framed);
+    }
+    return framed;
   }
 
   setTui(tui: TUI | null) {
     this.tuiRef = tui;
   }
 
-  loadFrames(emoteSetDir: string, _extDir: string) {
-    this.frameMap = discoverFrames(emoteSetDir);
+  loadFrames(emoteSetDir: string, _extDir: string, transform?: FrameTransform) {
+    this.frameMap = discoverFrames(emoteSetDir, transform);
+  }
+
+  getFrameFiles(state: EmoteState): string[] {
+    return this.frameMap.get(state)?.files ?? [];
   }
 
   getRenderedFrame(): RenderedFrame | null {
@@ -138,24 +190,38 @@ export class TmuxKittyUnicodeRenderer implements Renderer {
   }
 
   private show(base64: string, force = false): boolean {
-    if (!force && base64 === this.lastShownBase64) return true;
-    this.lastShownBase64 = base64;
+    const cellDims = getCellDimensions();
+    const framed = this.frameRows > 0;
+    const showKey = framed
+      ? `${cellDims.widthPx}x${cellDims.heightPx}|${this.frameColor.join(",")}|${base64}`
+      : base64;
+    if (!force && showKey === this.lastShownBase64) return true;
+    this.lastShownBase64 = showKey;
+    this.lastRawBase64 = base64;
 
     const dims = getImageDimensions(base64, "image/png") ?? { widthPx: 510, heightPx: 510 };
-    const cellDims = getCellDimensions();
-    const cols = this.size;
-    const rows = calculateImageRows(dims, cols, cellDims);
+    let payload = base64;
+    let cols = this.size;
+    let rows: number;
+    if (framed) {
+      const stroke = frameStroke(cellDims);
+      rows = this.frameRows;
+      cols = frameCols(rows, cellDims, { width: dims.widthPx, height: dims.heightPx }, stroke);
+      payload = this.framedBase64(base64, { cols, rows, stroke, color: this.frameColor }, cellDims);
+    } else {
+      rows = placeholderRows(dims, cols, cellDims);
+    }
 
     // Transmit image data via passthrough (uploads to terminal's image store)
-    const transmit = buildTransmitSequence(base64, this.imageId, cols, rows);
+    const transmit = buildTransmitSequence(payload, this.imageId, cols, rows, this.passthrough);
     process.stdout.write(transmit);
 
     // Build placeholder grid as text lines
     const lines = buildPlaceholderLines(this.imageId, cols, rows);
 
-    log(`TmuxKittyUnicodeRenderer.show: dims=${dims.widthPx}x${dims.heightPx}, cols=${cols}, rows=${rows}, imageId=${this.imageId}`);
+    log(`KittyUnicodeRenderer.show: dims=${dims.widthPx}x${dims.heightPx}, cols=${cols}, rows=${rows}, framed=${framed}, imageId=${this.imageId}`);
 
-    this.currentFrame = { kind: "placeholder", lines, rows };
+    this.currentFrame = { kind: "placeholder", lines, rows, cols, framed };
     this.tuiRef?.requestRender();
     return true;
   }
@@ -218,7 +284,7 @@ export class TmuxKittyUnicodeRenderer implements Renderer {
   dispose() {
     // Delete image from terminal's graphics memory
     const del = `\x1b_Ga=d,d=I,i=${this.imageId},q=2\x1b\\`;
-    process.stdout.write(wrapTmuxPassthrough(del));
+    process.stdout.write(this.passthrough ? wrapTmuxPassthrough(del) : del);
     this.currentFrame = null;
   }
 
