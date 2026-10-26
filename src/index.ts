@@ -20,6 +20,7 @@ import { AsciiRenderer } from "./render_ascii.ts";
 import { Animator } from "./animator.ts";
 import { createWidgetFactory } from "./widget.ts";
 import { resolveRenderer } from "./terminal.ts";
+import { readYoloRest } from "./yolo.ts";
 
 const WIDGET_KEY = "gentle-emote";
 const BANNER_POLL_MS = 2000;
@@ -33,6 +34,8 @@ const JOB_TOOLS = new Set(["bash_background", "monitor", "job_list", "job_stop"]
 const MEMORY_TOOLS = new Set(["mem_save"]);
 /** Gentle Shell hands out a read/observe adapter for its YOLO switch on this event-bus channel. */
 const YOLO_HOST_CHANNEL = "gentle:yolo:host-ui";
+/** Fired while a guarded confirm, choice, or questionnaire is waiting. The Yes/No art covers the execution. */
+const HERDR_BLOCKED = "herdr:blocked";
 const YOLO_DISCOVERY_MS = 300;
 /** Quick tools whose scene would otherwise flash by: keep it until the next event. */
 const STICKY_TOOL_STATES = new Set<EmoteState>(["jobs", "remember"]);
@@ -60,14 +63,14 @@ const EMOTE_DESCRIPTIONS: Record<string, string> = {
   success: "celebrates",
   failure: "robot blew up",
   compact: "shrinks in place",
-  ask: "STOP: you decide",
+  ask: "Yes/No while a prompt is on screen",
   grandma: "idle too long (press a key to wake)",
   bye: "stores memory, tips the hat",
   delegate: "football coach whistling at IA robots (subagents)",
   jobs: "sips mate watching a progress bar (background jobs)",
   remember: "whispers into the Engram elephant's ear (mem_save)",
   yolo: "sunglasses, YOLO headband and a rocket (YOLO mode)",
-  "super-yolo": "the YOLO character with a sun instead of the rocket",
+  "super-yolo": "the same character with a sun (Super YOLO mode)",
   explore: "explorer hat, walking, flashlight on footprints (explore subagents)",
   build: "welding mask and torch (worker / fix subagents)",
   verify: "police officer, a stamp lands on the robot (verify / validator subagents)",
@@ -164,6 +167,7 @@ export default function (pi: ExtensionAPI) {
   let stopTerminalInput: (() => void) | null = null;
   let watchedBannerFiles: string[] = [];
   let yoloOn = false;
+  let yoloVariant: EmoteState | null = null;
 
   const animator = new Animator(config, renderer);
 
@@ -248,6 +252,8 @@ export default function (pi: ExtensionAPI) {
 
   interface YoloReader {
     read(): Promise<unknown>;
+    readMode?: () => Promise<unknown>;
+    readSnapshot?: () => Promise<unknown>;
     observe(refresh: () => void): () => void;
     dispose?(): void;
   }
@@ -258,11 +264,14 @@ export default function (pi: ExtensionAPI) {
     const reader = yoloReader;
     if (!reader) return;
     try {
-      const on = (await reader.read()) === "ON";
-      if (reader !== yoloReader || !widgetActive || on === yoloOn) return;
+      const variant = await readYoloRest(reader);
+      if (reader !== yoloReader || !widgetActive) return;
+      const on = variant !== null;
+      if (on === yoloOn && variant === yoloVariant) return;
       yoloOn = on;
-      log(`yolo: ${on ? "on" : "off"}`);
-      animator.setIdleVariant(on ? "yolo" : null);
+      yoloVariant = variant;
+      log(`yolo: ${variant ?? "off"}`);
+      animator.setIdleVariant(variant);
       loadEmoteSet(currentEmoteSet);
       refreshCurrentFrame();
     } catch { /* display only */ }
@@ -297,6 +306,7 @@ export default function (pi: ExtensionAPI) {
     yoloReader?.dispose?.();
     yoloReader = null;
     yoloOn = false;
+    yoloVariant = null;
     animator.setIdleVariant(null);
   }
 
@@ -408,7 +418,7 @@ export default function (pi: ExtensionAPI) {
 
     stopTerminalInput?.();
     stopTerminalInput = ctx.ui.onTerminalInput?.(() => {
-      if (animator.currentState === "grandma") animator.transitionTo("hi");
+      if (animator.currentState === "grandma") animator.wave();
       else animator.touch();
       return undefined;
     }) ?? null;
@@ -431,6 +441,7 @@ export default function (pi: ExtensionAPI) {
     unwatchBanner();
     stopTerminalInput?.();
     stopTerminalInput = null;
+    stopBlocked?.();
     if (farewellTimer) { clearTimeout(farewellTimer); farewellTimer = null; }
     if (widgetActive && ctx.hasUI) {
       ctx.ui.setWidget(WIDGET_KEY, undefined);
@@ -513,12 +524,19 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("ui_prompt_start", async () => {
     if (!widgetActive) return;
-    animator.transitionTo("ask");
+    animator.beginPrompt();
   });
 
   pi.on("ui_prompt_end", async () => {
     if (!widgetActive) return;
-    animator.transitionTo(farewell ? "bye" : "think");
+    animator.endPrompt();
+  });
+
+  const stopBlocked = pi.events?.on?.(HERDR_BLOCKED, (data: unknown) => {
+    if (!widgetActive) return;
+    const active = !!data && typeof data === "object" && (data as { active?: unknown }).active === true;
+    if (active) animator.beginPrompt();
+    else animator.endPrompt();
   });
 
   pi.on("agent_end", async () => {

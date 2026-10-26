@@ -187,9 +187,21 @@ export class Animator {
     }
   }
 
-  /** Flies in once (`in_*`), then the propeller keeps spinning until the greeting ends. */
+  /** Session greeting: flies in with the propeller, then waves. */
   private enterHi() {
-    this.enterSequence("hi");
+    this.enterSequence("hi", false);
+    this.holdTimer = setTimeout(() => this.transitionTo("idle"), this.config.holdDuration.hi);
+  }
+
+  /** Wakes from the grandma with the wave only. The propeller plays on session entry. */
+  wave() {
+    this.stopped = false;
+    this.clearStateTimers();
+    this.currentState = "hi";
+    if (!this.enterSequence("hi", true)) {
+      this.transitionTo("idle");
+      return;
+    }
     this.holdTimer = setTimeout(() => this.transitionTo("idle"), this.config.holdDuration.hi);
   }
 
@@ -216,8 +228,11 @@ export class Animator {
   }
 
   enterIdle() {
-    const frames = this.idleFrames();
-    this.renderer.showFrame(frames.state, frames.rest);
+    if (this.promptDepth > 0) this.presentCycle("ask", 0);
+    else {
+      const frames = this.idleFrames();
+      this.renderer.showFrame(frames.state, frames.rest);
+    }
     this.scheduleBlink();
     this.scheduleGrandma();
   }
@@ -247,6 +262,10 @@ export class Animator {
   }
 
   private doBlink() {
+    if (this.promptDepth > 0) {
+      this.scheduleBlink();
+      return;
+    }
     const { state, rest: defaultFile, blink: blinkFile } = this.idleFrames();
     if (!this.renderer.showFrame(state, blinkFile)) {
       this.scheduleBlink();
@@ -276,21 +295,26 @@ export class Animator {
     }, blinkDuration);
   }
 
+  private paintTalk(closed: boolean) {
+    if (this.promptDepth > 0) {
+      this.presentCycle("ask", 0);
+      return;
+    }
+    if (closed) this.renderer.showTalkCloseFrame();
+    else this.renderer.showTalkFrame(this.emotesConfig);
+  }
+
   private enterTalk() {
     this.talkWordCount = 0;
     this.talkStartTime = Date.now();
     this.lastTokenTime = Date.now();
     this.talkMouthClosed = false;
 
-    this.renderer.showTalkFrame(this.emotesConfig);
+    this.paintTalk(false);
 
     this.talkTimer = setInterval(() => {
       if (this.currentState !== "talk") return;
-      if (this.talkMouthClosed) {
-        this.renderer.showTalkCloseFrame();
-      } else {
-        this.renderer.showTalkFrame(this.emotesConfig);
-      }
+      this.paintTalk(this.talkMouthClosed);
     }, this.config.talkTickMs);
   }
 
@@ -385,24 +409,38 @@ export class Animator {
     }, this.frameMs(visual));
   }
 
-  /** Plays `in_*` frames once, then loops the remaining frames forward. */
-  private enterSequence(state: EmoteState) {
+  /** A Yes/No prompt keeps its picture even while a sequence timer is running. */
+  private paintSequence(state: EmoteState, file: string) {
+    if (this.promptDepth > 0) {
+      this.presentCycle("ask", 0);
+      return;
+    }
+    this.renderer.showFrame(state, file);
+  }
+
+  /**
+   * Plays `in_*` frames once, then loops the rest.
+   * `waveOnly` skips the arrival, so a wake-up does not put the propeller back on.
+   */
+  private enterSequence(state: EmoteState, waveOnly = false): boolean {
     const files = this.renderer.getFrameFiles(state);
     const intro = files.filter((f) => f.startsWith("in_"));
     const loop = files.filter((f) => !f.startsWith("in_"));
-    const ordered = [...intro, ...loop];
-    if (ordered.length === 0) return;
+    const ordered = waveOnly ? loop : [...intro, ...loop];
+    if (ordered.length === 0) return false;
+    const loopStart = waveOnly ? 0 : intro.length;
 
     let index = 0;
-    this.renderer.showFrame(state, ordered[0]!);
-    if (ordered.length === 1) return;
+    this.paintSequence(state, ordered[0]!);
+    if (ordered.length === 1) return true;
 
     this.cycleTimer = setInterval(() => {
       if (this.currentState !== state) return;
       index++;
-      if (index >= ordered.length) index = loop.length > 0 ? intro.length : ordered.length - 1;
-      this.renderer.showFrame(state, ordered[index]!);
+      if (index >= ordered.length) index = loop.length > 0 ? loopStart : ordered.length - 1;
+      this.paintSequence(state, ordered[index]!);
     }, this.frameMs(state));
+    return true;
   }
 
   private enterHold(state: EmoteState, duration: number, nextState: EmoteState = "idle") {

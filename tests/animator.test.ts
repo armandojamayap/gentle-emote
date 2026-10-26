@@ -130,6 +130,24 @@ test("Super YOLO thinking advances sun frames without changing the logical activ
 });
 
 
+test("a Yes/No prompt covers the execution frames and then returns to them", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  try {
+    const renderer = fakeRenderer({ tool: ["a", "b", "c"], ask: ["yn1", "yn2"] });
+    const animator = new Animator(config, renderer as any);
+    animator.setEmotesConfig({ cycle: { tool: "loop", ask: "loop" }, frameMs: { tool: 100, ask: 100 } });
+    animator.transitionTo("tool");
+    animator.beginPrompt();
+    mock.timers.tick(100);
+    mock.timers.tick(100);
+    assert.equal(animator.currentState, "tool");
+    assert.ok(renderer.shown.slice(-2).every((frame) => frame.startsWith("ask#")));
+    animator.endPrompt();
+    assert.ok(renderer.shown.at(-1)?.startsWith("tool#"));
+    animator.stop();
+  } finally { mock.timers.reset(); }
+});
+
 test("prompt display priority keeps underlying activity and nested prompts independent", () => {
   mock.timers.enable({ apis: ["setTimeout", "setInterval", "Date"] });
   try {
@@ -165,6 +183,24 @@ test("prompt display priority keeps underlying activity and nested prompts indep
   } finally { mock.timers.reset(); }
 });
 
+
+test("waking from the grandma waves without replaying the propeller arrival", () => {
+  mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  try {
+    const files = readdirSync(new URL("../emotes/gentleman/hi/", import.meta.url)).filter((f) => f.endsWith(".png")).sort();
+    const renderer = fakeRenderer({ hi: files, idle: ["idle.png"], grandma: ["knit_1.png"] });
+    const animator = new Animator({ ...config, cycleMs: 280, holdDuration: { ...config.holdDuration, hi: 840 } }, renderer as any);
+    animator.transitionTo("grandma");
+    animator.wave();
+    mock.timers.tick(560);
+    const waved = renderer.shown.filter((frame) => frame.startsWith("hi/"));
+    assert.ok(waved.length > 0);
+    assert.ok(waved.every((frame) => frame.includes("landed_")));
+    mock.timers.tick(280);
+    assert.equal(animator.currentState, "idle");
+    animator.clearAllTimers();
+  } finally { mock.timers.reset(); }
+});
 
 test("greeting plays arrival and helmet removal once before waving until its hold ends", () => {
   mock.timers.enable({ apis: ["setTimeout", "setInterval"] });

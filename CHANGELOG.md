@@ -2,6 +2,13 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## Unreleased
+
+### Fixed
+- **Super YOLO** — Gentle Shell's `super-yolo` mode rests on the sun. `yolo` mode keeps the rocket. `read()` reports ON for both, so the mode is what picks the picture.
+- **Yes/No** — a confirm such as `Allow guarded git push?` keeps the ask picture on top of whatever execution is running, and returns to that execution when the prompt closes.
+- **Grandma wake** — coming back from the grandma waves. The propeller beanie plays only when the session starts.
+
 ## gentle-emote v0.1.3
 
 ### Changed

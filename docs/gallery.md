@@ -10,8 +10,8 @@ Every state of the Gentleman set, shown with the pink accent. Run `/emote <state
 
 - **Remember:** a cupped whispering hand beside Engram's large gray ear, with a complete trunk and a dynamic pink outline.
 - **Explore:** the original full-resolution Gentleman face, glasses and curled mustache on a backpacked walker with three leg poses, a flashlight cone and toe/heel footprints kept inside the 48×40 frame.
-- **YOLO:** a pointed rocket with a porthole, fins and pulsing exhaust. Thinking in the YOLO set also uses the rocket; normal thinking keeps its light bulb.
-- **Super YOLO:** the identical YOLO character with a radiant, pulsing sun instead of the rocket. Preview it with `/emote super-yolo`. YOLO mode still rests on the rocket.
+- **YOLO:** a pointed rocket with a porthole, fins and pulsing exhaust. Gentle Shell's `yolo` mode rests on this picture, and thinking in that mode uses the rocket too. Normal thinking keeps its light bulb.
+- **Super YOLO:** the identical YOLO character with a radiant, pulsing sun instead of the rocket. Gentle Shell's `super-yolo` mode rests on this picture, and thinking in that mode uses the sun.
 
 The source colors `#ff00ff`, `#aa00aa` and `#ff80ff` remain runtime recoloring keys. Frames use native 48×40 pixels with no smoothing.
 

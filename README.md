@@ -53,7 +53,7 @@ Any new prompt cancels a preview, so the avatar always follows the real agent.
 | `read` | Reading code or memory | `read`, `grep`, `find`, `ls`, `glob`, `mem_search`, `codegraph_explore`, `web_fetch`… | Deerstalker hat, pipe and a magnifying glass |
 | `write` | Editing code | `write`, `edit`, `multi_edit`, `apply_patch` | Cooks code in a frying pan |
 | `tool` | Running other tools | Any other tool, e.g. `bash` | Whips the "IA" robot |
-| `ask` | Agent needs your answer | `ask_user_question`, `ask_user_choice` | Raised palm with a Y/N bubble |
+| `ask` | A Yes/No is on screen | `ask_user_question`, `ask_user_choice`, or a confirm such as `Allow guarded git push?` | Raised palm with a Y/N bubble. It covers the execution until the prompt closes |
 | `success` | Agent finished fine | A run that used tools ends with no tool errors | Chef's kiss |
 | `failure` | Something failed | Tool result with error | The robot blows up in his face |
 | `compact` | Context compaction | `session_before_compact` | Shrinks in place, shirt stays black |
@@ -65,10 +65,10 @@ Any new prompt cancels a preview, so the avatar always follows the real agent.
 | **`review`** | Reviewing subagent | Agent starting with `review-` (`review-readability`, `review-reliability`, `review-resilience`, `review-risk`) | Red pen in hand while the robot rotates the signs: magnifier, test tube, shield, warning |
 | **`jira`** | Jira subagent | Agent matching `jira` (`jira-comment`) | Launches a rocket that arrives in a cloud |
 | **`jobs`** | **Background jobs** | `bash_background`, `monitor`, `job_list`, `job_stop` | Sips mate while watching a progress bar, with a kitchen timer beside him |
-| **`yolo`** | **YOLO mode** | Reads Gentle Shell's YOLO state (read-only, never changes it) | Sunglasses and a "YOLO" headband in every scene, switched the moment YOLO turns on or off; at rest he holds a rocket |
-| **`super-yolo`** | Sun variant | `/emote super-yolo` | The same YOLO character, with a sun instead of the rocket |
+| **`yolo`** | **YOLO mode** | Reads Gentle Shell's permission mode when it is `yolo` (read-only, never changes it) | Sunglasses and a "YOLO" headband in every scene; at rest he holds a rocket |
+| **`super-yolo`** | **Super YOLO mode** | Reads Gentle Shell's permission mode when it is `super-yolo` | The same YOLO character, with a sun instead of the rocket |
 | **`remember`** | **Saves a memory in Engram** (optional) | `mem_save` | Cups a hand over his mouth and whispers into the Engram elephant's ear. The rim follows the accent color |
-| `grandma` | Long idle | No activity or keystrokes for `grandmaAfterMs` (30 s) | Turns into a knitting grandma |
+| `grandma` | Long idle | No activity or keystrokes for `grandmaAfterMs` (30 s) | Turns into a knitting grandma. A key wakes him with a wave; the propeller beanie is only the session greeting |
 | `bye` | You say goodbye | A prompt matching `farewellPattern` (`chau`, `bye`, `nos vemos`…) | Tips his hat |
 
 The subagent scene comes from the `agent` argument of the tool call, so new agents that follow the same naming get the right scene for free. A call without an agent name (for example, continuing a task by id) shows `delegate`.
@@ -182,7 +182,7 @@ Entries are glob patterns against the model ID and/or thinking level. The last m
 
 ### A YOLO look for your avatar
 
-Ship a twin set named `<your-set>-yolo` (for example `my-avatar-yolo/`) next to it. While Gentle Shell's YOLO mode is on, every frame comes from the twin instead; states missing there simply don't animate, so copy the whole set. Without a twin, your avatar just keeps its normal look.
+Ship a twin set named `<your-set>-yolo` (for example `my-avatar-yolo/`) next to it. While Gentle Shell's YOLO or Super YOLO mode is on, every frame comes from the twin instead; states missing there simply don't animate, so copy the whole set. The rest pose is `<set>/yolo/yolo.png` for the rocket and `<set>/super-yolo/super-yolo.png` for the sun. Without a twin, your avatar just keeps its normal look.
 
 ### Text-only avatars
 
@@ -221,7 +221,7 @@ Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"asc
 ## Limitations
 
 - Placing the avatar beside the prompt relies on Pi's internal layout. If a future version changes it, the avatar falls back to sitting above the editor.
-- YOLO detection uses Gentle Shell's internal YOLO channel. It only reads and observes the state and never toggles it. In other hosts the `yolo` look never shows.
+- YOLO and Super YOLO detection uses Gentle Shell's internal channel. It only reads and observes the mode and never toggles it. YOLO rests on the rocket; Super YOLO rests on the sun. In other hosts neither look shows.
 - The `bye` animation plays when you say goodbye, not when the process quits: a quit clears the screen right away.
 - Zellij has no image passthrough, so it gets the ASCII fallback.
 
