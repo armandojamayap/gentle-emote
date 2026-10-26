@@ -1,8 +1,13 @@
 <div align="center">
-  <img src="assets/gentle-logo-only.png" alt="Gentle" width="132" />
-</div>
+  <img src="assets/gentle-logo-only.png" alt="Gentle Emote" width="132" />
 
-# gentle-emote
+# Gentle Emote
+
+**A Gentleman beside the prompt. He acts out the agent. He uses no tokens.**
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+</div>
 
 A pixel-art **Gentleman** that sits in a frame to the left of your prompt and acts out what the agent is doing: thinking, talking, reading, writing, delegating to subagents, watching background jobs, saving memories, going YOLO…
 
@@ -218,6 +223,10 @@ Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"asc
 - YOLO detection uses Gentle Shell's internal YOLO channel. It only reads and observes the state and never toggles it. In other hosts the `yolo` look never shows.
 - The `bye` animation plays when you say goodbye, not when the process quits: a quit clears the screen right away.
 - Zellij has no image passthrough, so it gets the ASCII fallback.
+
+## Contributing
+
+Open an issue first and wait for the `approved` label. A pull request has to point at that issue with `Closes #N` and needs an approving review. Only the maintainer merges. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
