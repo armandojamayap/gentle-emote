@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/gentle-logo-only.png" alt="Gentle" width="132" />
+</div>
+
 # gentle-emote
 
 A pixel-art **Gentleman** that sits in a frame to the left of your prompt and acts out what the agent is doing: thinking, talking, reading, writing, delegating to subagents, watching background jobs, saving memories, going YOLO…
