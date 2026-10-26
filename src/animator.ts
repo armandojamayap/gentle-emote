@@ -3,6 +3,9 @@ import type { EmoteState, Config, EmotesConfig } from "./types.ts";
 import type { Renderer, RenderedFrame } from "./renderer.ts";
 import { log } from "./log.ts";
 
+/** How long the talk scene lingers once the reply has finished streaming. */
+const TALK_TAIL_MS = 500;
+
 // --- Helpers ---
 
 function randomInRange(min: number, max: number): number {
@@ -150,7 +153,13 @@ export class Animator {
       case "delegate":
       case "jobs":
       case "remember":
-      case "yolo": this.enterCycle(state); break;
+      case "yolo":
+      case "explore":
+      case "build":
+      case "verify":
+      case "judge":
+      case "review":
+      case "jira": this.enterCycle(state); break;
       case "grandma": this.enterSequence(state); break;
       case "bye": this.enterSequence(state); break;
     }
@@ -333,17 +342,13 @@ export class Animator {
     }, remaining);
   }
 
+  /** The reply finished streaming: wrap up after a short tail instead of "reading" it out loud. */
   endTalk() {
     if (this.currentState !== "talk") return;
-    const targetDurationMs = (this.talkWordCount / this.config.readingSpeed) * 1000;
-    const elapsed = Date.now() - this.talkStartTime;
-    if (elapsed >= targetDurationMs) {
-      this.finishTalk();
-    } else {
-      // Streaming finished but reading time remains — keep mouth animating
-      if (this.talkGapTimer) { clearTimeout(this.talkGapTimer); this.talkGapTimer = null; }
-      this.talkMouthClosed = false;
-    }
+    if (this.talkDurationTimer) { clearTimeout(this.talkDurationTimer); this.talkDurationTimer = null; }
+    this.talkDurationTimer = setTimeout(() => {
+      if (this.currentState === "talk") this.finishTalk();
+    }, TALK_TAIL_MS);
   }
 
   private frameMs(state: EmoteState): number {

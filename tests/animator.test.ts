@@ -97,6 +97,8 @@ test("success after talk: setAfterTalkState plays once talking ends", () => {
     animator.transitionTo("talk");
     animator.setAfterTalkState("success");
     animator.endTalk();
+    assert.equal(animator.currentState, "talk");
+    mock.timers.tick(500);
     assert.equal(animator.currentState, "success");
     mock.timers.tick(1000);
     assert.equal(animator.currentState, "idle");
