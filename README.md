@@ -197,6 +197,7 @@ The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from c
 | Terminal | Renderer | Status |
 |----------|----------|--------|
 | Ghostty, kitty, WarpTerminal | kitty Unicode placeholders | ✅ Crisp image in a frame |
+| Orca | kitty Unicode placeholders | ✅ Crisp image in a frame; detected by `TERM_PROGRAM=Orca` or `ORCA_IMAGE_PROTOCOL=kitty` |
 | tmux (inside Ghostty or kitty) | kitty Unicode placeholders | ✅ Needs `set -g allow-passthrough on` |
 | iTerm2, WezTerm | iTerm2 images | ⚠️ Works, less tested |
 | Other truecolor terminals | Half-block text | ✅ Native-resolution sprite drawn with `▀` cells; no image protocol needed |

@@ -61,6 +61,7 @@ const DEFAULTS: Config = {
     { match: "wezterm", render: "iterm2" },
     { match: "ghostty", render: "kitty" },
     { match: "warpterminal", render: "kitty" },
+    { match: "orca", render: "kitty-unicode" },
   ],
 };
 

@@ -129,6 +129,15 @@ test("an unknown truecolor terminal without an image protocol gets the half-bloc
   });
 });
 
+test("Orca gets crisp kitty Unicode placeholders, by TERM_PROGRAM or by its protocol announcement", () => {
+  withTerminal({ TERM_PROGRAM: "Orca", COLORTERM: "truecolor" }, () => {
+    assert.equal(resolveRenderer(DEFAULTS.terminals, new Set()).protocol, "kitty-unicode");
+  });
+  withTerminal({ ORCA_IMAGE_PROTOCOL: "kitty" }, () => {
+    assert.equal(resolveRenderer(DEFAULTS.terminals, new Set()).protocol, "kitty-unicode");
+  });
+});
+
 test("an unknown terminal without truecolor keeps the ASCII renderer", () => {
   withTerminal({ PI_TRUE_COLOR: "0" }, () => {
     assert.equal(resolveRenderer(DEFAULTS.terminals, new Set()).protocol, "ascii");

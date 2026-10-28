@@ -29,6 +29,10 @@ export function detectTerminalName(): string {
   if (termProgram === "vscode") return "vscode";
   if (termProgram === "alacritty") return "alacritty";
   if (termProgram === "warpterminal") return "warpterminal";
+  // Orca (xterm.js + image addon) supports the kitty graphics protocol with
+  // Unicode placeholders and announces it in ORCA_IMAGE_PROTOCOL. Some Orca
+  // panes drop TERM_PROGRAM, so the announcement alone is enough.
+  if (termProgram === "orca" || process.env.ORCA_IMAGE_PROTOCOL === "kitty") return "orca";
 
   return "unknown";
 }

@@ -5,6 +5,7 @@ All notable changes to gentle-emote will be documented in this file. Entries bef
 ## Unreleased
 
 ### Added
+- **Orca support** — Orca's terminal (xterm.js image addon) implements the kitty graphics protocol with Unicode placeholders, so it now gets the crisp framed avatar beside the prompt. Detected by `TERM_PROGRAM=Orca` or `ORCA_IMAGE_PROTOCOL=kitty`, since some Orca panes drop `TERM_PROGRAM`.
 - **Half-block renderer** — terminals without an image protocol but with truecolor (VS Code and other xterm.js terminals) now show the pixel-art Gentleman as `▀` text cells instead of the ASCII bot. Being plain text, it survives TUI redraws and sits in the prompt gutter. `halfblockSize` sets its width in columns (default 32; 48 is the native sprite size), scaled by dominant colour so the pixel art stays crisp; `render: "halfblock"` forces it.
 
 ## gentle-emote v0.1.4
