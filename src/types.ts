@@ -19,6 +19,8 @@ export interface Config {
   size: number;
   /** Avatar width in cells for the half-block renderer (sprite pixels; 48 = native, 32 = default). */
   halfblockSize: number;
+  /** Avatar width in cells for the sextant renderer (2x3 sub-pixels per cell). */
+  sextantSize: number;
   placement: Placement;
   /** Box the avatar in a rounded frame next to the prompt. */
   frame: boolean;
@@ -48,11 +50,11 @@ export interface EmoteMapping {
 
 export interface TerminalMapping {
   match: string;
-  render: "kitty" | "kitty-unicode" | "iterm2" | "halfblock" | "ascii" | "auto";
+  render: "kitty" | "kitty-unicode" | "iterm2" | "sextant" | "halfblock" | "ascii" | "auto";
 }
 
 export interface ResolvedRenderer {
-  protocol: "kitty" | "kitty-unicode" | "iterm2" | "halfblock" | "ascii";
+  protocol: "kitty" | "kitty-unicode" | "iterm2" | "sextant" | "halfblock" | "ascii";
   multiplexer: "tmux" | "screen" | "zellij" | null;
   warning: string | null;
   warningLevel: "warning" | "info";

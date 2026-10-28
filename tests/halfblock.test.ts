@@ -129,6 +129,13 @@ test("an unknown truecolor terminal without an image protocol gets the half-bloc
   });
 });
 
+test("Windows Terminal gets the sextant renderer by default", () => {
+  assert.equal(DEFAULTS.sextantSize, 16);
+  withTerminal({ WT_SESSION: "1" }, () => {
+    assert.equal(resolveRenderer(DEFAULTS.terminals, new Set()).protocol, "sextant");
+  });
+});
+
 test("Orca gets crisp kitty Unicode placeholders, by TERM_PROGRAM or by its protocol announcement", () => {
   withTerminal({ TERM_PROGRAM: "Orca", COLORTERM: "truecolor" }, () => {
     assert.equal(resolveRenderer(DEFAULTS.terminals, new Set()).protocol, "kitty-unicode");

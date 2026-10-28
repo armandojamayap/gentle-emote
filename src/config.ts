@@ -41,6 +41,7 @@ const DEFAULTS: Config = {
   debug: false,
   size: 10,
   halfblockSize: 32,
+  sextantSize: 16,
   placement: "beside-editor",
   frame: true,
   frameRows: 4,
@@ -62,6 +63,7 @@ const DEFAULTS: Config = {
     { match: "ghostty", render: "kitty" },
     { match: "warpterminal", render: "kitty" },
     { match: "orca", render: "kitty-unicode" },
+    { match: "windows-terminal", render: "sextant" },
   ],
 };
 

@@ -200,6 +200,7 @@ The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from c
 | Orca | kitty Unicode placeholders | ✅ Crisp image in a frame; detected by `TERM_PROGRAM=Orca` or `ORCA_IMAGE_PROTOCOL=kitty` |
 | tmux (inside Ghostty or kitty) | kitty Unicode placeholders | ✅ Needs `set -g allow-passthrough on` |
 | iTerm2, WezTerm | iTerm2 images | ⚠️ Works, less tested |
+| Windows Terminal | Sextant text | ✅ 2×3 sub-pixels per cell (Unicode sextants): 16 × 7 cells by default |
 | Other truecolor terminals | Half-block text | ✅ Native-resolution sprite drawn with `▀` cells; no image protocol needed |
 | Zellij, screen, terminals without truecolor | ASCII | Fallback only |
 
@@ -218,7 +219,13 @@ Force a renderer with `terminals`:
 { "terminals": [{ "match": "tmux", "render": "kitty-unicode" }] }
 ```
 
-Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"halfblock"`, `"ascii"`.
+Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"sextant"`, `"halfblock"`, `"ascii"`.
+
+The sextant renderer packs 2×3 sub-pixels into each cell with two colours per cell, so the avatar stays small with most of its detail. It needs a terminal that draws the Unicode sextant block (U+1FB00–U+1FB3B); Windows Terminal does. `sextantSize` sets its width in columns (default 16, which takes 16 × 7 cells):
+
+```json
+{ "sextantSize": 20 }
+```
 
 The half-block renderer draws each sprite pixel as half a text cell, and scales the 48×40 sprite down by dominant colour (exact palette, crisp edges). `halfblockSize` sets its width in columns: 32 (default) takes 32 × 14 cells, 48 is the native, sharpest size at 48 × 20, and below 32 details such as the glasses start to go:
 

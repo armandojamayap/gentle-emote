@@ -3,7 +3,7 @@ import type { TerminalMapping, ResolvedRenderer } from "./types.ts";
 import { checkTmuxPassthrough, detectOuterTerminal } from "./tmux.ts";
 import { log } from "./log.ts";
 
-type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "halfblock" | "ascii";
+type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "sextant" | "halfblock" | "ascii";
 
 const MULTIPLEXERS = new Set(["tmux", "screen", "zellij"]);
 
@@ -33,6 +33,8 @@ export function detectTerminalName(): string {
   // Unicode placeholders and announces it in ORCA_IMAGE_PROTOCOL. Some Orca
   // panes drop TERM_PROGRAM, so the announcement alone is enough.
   if (termProgram === "orca" || process.env.ORCA_IMAGE_PROTOCOL === "kitty") return "orca";
+  // Windows Terminal has no kitty/iTerm2 images but draws the sextant block itself.
+  if (process.env.WT_SESSION) return "windows-terminal";
 
   return "unknown";
 }

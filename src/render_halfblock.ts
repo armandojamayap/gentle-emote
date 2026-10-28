@@ -1,8 +1,10 @@
+import { getCellDimensions } from "@earendil-works/pi-tui";
 import { BaseImageRenderer } from "./render_image.ts";
 import type { ImageDims } from "./render_image.ts";
 import { decodePng } from "./png.ts";
 import type { RgbaImage } from "./png.ts";
 import { downscale, toHalfblockLines } from "./halfblock.ts";
+import { sextantRows, toSextantLines } from "./sextant.ts";
 import { log } from "./log.ts";
 
 /**
@@ -67,5 +69,18 @@ export class HalfblockRenderer extends TextPixelRenderer {
   protected toLines(image: RgbaImage) {
     const scaled = downscale(image, this.size);
     return { lines: toHalfblockLines(scaled), cols: scaled.width };
+  }
+}
+
+/**
+ * Sextants: one cell holds 2x3 sub-pixels in two colours, three times the
+ * detail of half blocks in the same space. Needs a terminal that draws the
+ * Unicode sextant block (U+1FB00..U+1FB3B), such as Windows Terminal.
+ * `size` is the width in cells; rows follow the sprite's aspect ratio.
+ */
+export class SextantRenderer extends TextPixelRenderer {
+  protected toLines(image: RgbaImage) {
+    const rows = sextantRows(image, this.size, getCellDimensions());
+    return { lines: toSextantLines(image, this.size, rows), cols: this.size };
   }
 }
