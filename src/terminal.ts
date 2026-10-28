@@ -3,7 +3,7 @@ import type { TerminalMapping, ResolvedRenderer } from "./types.ts";
 import { checkTmuxPassthrough, detectOuterTerminal } from "./tmux.ts";
 import { log } from "./log.ts";
 
-type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "ascii";
+type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "halfblock" | "ascii";
 
 const MULTIPLEXERS = new Set(["tmux", "screen", "zellij"]);
 
@@ -166,9 +166,10 @@ function resolveDirect(
     return { ...base, protocol: render };
   }
 
-  // No whitelist match — fall back to pi-tui capabilities
+  // No whitelist match — fall back to pi-tui capabilities. Without an image
+  // protocol, a truecolor terminal still draws the sprite as half-block text.
   const caps = getCapabilities();
-  const fallback: Protocol = caps.images ?? "ascii";
+  const fallback: Protocol = caps.images ?? (caps.trueColor ? "halfblock" : "ascii");
   log(`terminal: no whitelist match for "${name}", using pi-tui capabilities → "${fallback}"`);
   return { ...base, protocol: fallback };
 }
@@ -178,5 +179,5 @@ function resolveDirect(
  */
 function detectDirectProtocol(): Protocol {
   const caps = getCapabilities();
-  return caps.images ?? "ascii";
+  return caps.images ?? (caps.trueColor ? "halfblock" : "ascii");
 }

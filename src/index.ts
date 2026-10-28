@@ -17,6 +17,7 @@ import { KittyUnicodeRenderer } from "./render_kitty_unicode.ts";
 import { ITermRenderer } from "./render_iterm.ts";
 import { TmuxITermRenderer } from "./render_tmux_iterm.ts";
 import { AsciiRenderer } from "./render_ascii.ts";
+import { HalfblockRenderer } from "./render_halfblock.ts";
 import { Animator } from "./animator.ts";
 import { createWidgetFactory } from "./widget.ts";
 import { resolveRenderer } from "./terminal.ts";
@@ -135,6 +136,10 @@ function createRendererFromResolved(resolved: ResolvedRenderer, config: Config):
   if (protocol === "iterm2") {
     log(`createRenderer: using ${inTmux ? "TmuxITermRenderer" : "ITermRenderer"}`);
     return inTmux ? new TmuxITermRenderer(size) : new ITermRenderer(size);
+  }
+  if (protocol === "halfblock") {
+    log(`createRenderer: using HalfblockRenderer (size=${config.halfblockSize})`);
+    return new HalfblockRenderer(config.halfblockSize);
   }
   log(`createRenderer: using AsciiRenderer`);
   return new AsciiRenderer();

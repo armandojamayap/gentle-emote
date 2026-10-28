@@ -40,6 +40,7 @@ const DEFAULTS: Config = {
   enabled: true,
   debug: false,
   size: 10,
+  halfblockSize: 32,
   placement: "beside-editor",
   frame: true,
   frameRows: 4,

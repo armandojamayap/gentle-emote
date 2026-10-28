@@ -17,6 +17,8 @@ export interface Config {
   enabled: boolean;
   debug: boolean;
   size: number;
+  /** Avatar width in cells for the half-block renderer (sprite pixels; 48 = native, 32 = default). */
+  halfblockSize: number;
   placement: Placement;
   /** Box the avatar in a rounded frame next to the prompt. */
   frame: boolean;
@@ -46,11 +48,11 @@ export interface EmoteMapping {
 
 export interface TerminalMapping {
   match: string;
-  render: "kitty" | "kitty-unicode" | "iterm2" | "ascii" | "auto";
+  render: "kitty" | "kitty-unicode" | "iterm2" | "halfblock" | "ascii" | "auto";
 }
 
 export interface ResolvedRenderer {
-  protocol: "kitty" | "kitty-unicode" | "iterm2" | "ascii";
+  protocol: "kitty" | "kitty-unicode" | "iterm2" | "halfblock" | "ascii";
   multiplexer: "tmux" | "screen" | "zellij" | null;
   warning: string | null;
   warningLevel: "warning" | "info";

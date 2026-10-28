@@ -199,7 +199,8 @@ The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from c
 | Ghostty, kitty, WarpTerminal | kitty Unicode placeholders | ✅ Crisp image in a frame |
 | tmux (inside Ghostty or kitty) | kitty Unicode placeholders | ✅ Needs `set -g allow-passthrough on` |
 | iTerm2, WezTerm | iTerm2 images | ⚠️ Works, less tested |
-| Zellij, screen, others | ASCII | Fallback only |
+| Other truecolor terminals | Half-block text | ✅ Native-resolution sprite drawn with `▀` cells; no image protocol needed |
+| Zellij, screen, terminals without truecolor | ASCII | Fallback only |
 
 For tmux, add this to `tmux.conf` and restart the tmux server:
 
@@ -216,7 +217,13 @@ Force a renderer with `terminals`:
 { "terminals": [{ "match": "tmux", "render": "kitty-unicode" }] }
 ```
 
-Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"ascii"`.
+Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"halfblock"`, `"ascii"`.
+
+The half-block renderer draws each sprite pixel as half a text cell, and scales the 48×40 sprite down by dominant colour (exact palette, crisp edges). `halfblockSize` sets its width in columns: 32 (default) takes 32 × 14 cells, 48 is the native, sharpest size at 48 × 20, and below 32 details such as the glasses start to go:
+
+```json
+{ "halfblockSize": 48 }
+```
 
 ## Limitations
 

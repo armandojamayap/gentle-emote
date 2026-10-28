@@ -2,6 +2,11 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## Unreleased
+
+### Added
+- **Half-block renderer** — terminals without an image protocol but with truecolor (VS Code and other xterm.js terminals) now show the pixel-art Gentleman as `▀` text cells instead of the ASCII bot. Being plain text, it survives TUI redraws and sits in the prompt gutter. `halfblockSize` sets its width in columns (default 32; 48 is the native sprite size), scaled by dominant colour so the pixel art stays crisp; `render: "halfblock"` forces it.
+
 ## gentle-emote v0.1.4
 
 ### Fixed
